@@ -1,0 +1,19 @@
+{
+  "name": "humane-quotient-site",
+  "version": "1.0.0",
+  "description": "Humane Quotient (HuQ) interactive test website with Excel backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "compression": "^1.8.1",
+    "esbuild": "^0.25.0",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "jsdom": "^29.1.1",
+    "nodemailer": "^10.0.14"
+  }
+}
