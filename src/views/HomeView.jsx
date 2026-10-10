@@ -25,7 +25,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
       <section className="hero">
         <picture className="hero-bg" aria-hidden="true">
           <source media="(min-width:768px)" srcSet="/img/hero-red-desktop.webp" width="1920" height="1300" />
-          <img src="/img/hero-red-mobile.webp" width="1000" height="1300" alt="" fetchPriority="high" />
+          <img src="/img/hero-red-mobile.webp" width="1000" height="1300" alt="" fetchpriority="high" />
         </picture>
         <PetalsBackground />
 
@@ -83,7 +83,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
               sizes="(max-width:639px) 78vw, (max-width:1023px) 56vw, 503px"
               width="1000"
               height="1000"
-              fetchPriority="high"
+              fetchpriority="high"
               alt="The HuQ flower"
             />
           </div>

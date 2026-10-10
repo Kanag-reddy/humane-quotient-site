@@ -8,8 +8,19 @@ const { sendReportEmail } = require('../utils/mailer');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+function matchesSubmission(existing, answers, email) {
+  return !!existing &&
+    String(existing.email || '').toLowerCase() === email &&
+    Array.isArray(existing.answers) &&
+    existing.answers.length === answers.length &&
+    existing.answers.every((answer, index) => answer === answers[index]);
+}
+
 // POST /api/submit
 router.post('/submit', optionalToken, async (req, res) => {
+  let subId = '';
+  let submittedAnswers = null;
+  let respondentEmail = '';
   try {
     const { answers, demographics, name, email, submissionId, sendEmail } = req.body || {};
 
@@ -18,15 +29,35 @@ router.post('/submit', optionalToken, async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Invalid answers. Exactly 96 answers (1–5) required.' });
     }
 
+    if (submissionId !== undefined && (typeof submissionId !== 'string' || submissionId.trim().length > 100)) {
+      return res.status(400).json({ ok: false, error: 'Invalid submission ID.' });
+    }
+
     const respondentName = String(name || (req.user && req.user.name) || 'Anonymous').trim().slice(0, 80);
-    const respondentEmail = String(email || (req.user && req.user.email) || '').trim().toLowerCase();
+    respondentEmail = String(email || (req.user && req.user.email) || '').trim().toLowerCase();
 
     if (!respondentEmail || !EMAIL_RE.test(respondentEmail)) {
       return res.status(400).json({ ok: false, error: 'A valid email address is required.' });
     }
 
+    submittedAnswers = answers;
     const calculatedResult = HUQ.score(answers);
-    const subId = submissionId || ('HuQ-' + crypto.randomBytes(4).toString('hex').toUpperCase());
+    subId = submissionId ? submissionId.trim() : ('HuQ-' + crypto.randomBytes(4).toString('hex').toUpperCase());
+
+    if (submissionId) {
+      const existing = await db.findSubmissionById(subId);
+      if (existing) {
+        if (!matchesSubmission(existing, answers, respondentEmail)) {
+          return res.status(409).json({ ok: false, error: 'This submission ID is already associated with a different response.' });
+        }
+        return res.json({
+          ok: true,
+          id: subId,
+          result: existing.scores || calculatedResult,
+          emailed: !!existing.emailed
+        });
+      }
+    }
 
     const isGuest = !req.user;
     const userId = req.user ? (req.user._id || req.user.id) : null;
@@ -57,6 +88,21 @@ router.post('/submit', optionalToken, async (req, res) => {
       emailed
     });
   } catch (err) {
+    if (err && err.code === 11000 && subId && submittedAnswers) {
+      try {
+        const existing = await db.findSubmissionById(subId);
+        if (matchesSubmission(existing, submittedAnswers, respondentEmail)) {
+          return res.json({
+            ok: true,
+            id: subId,
+            result: existing.scores || HUQ.score(submittedAnswers),
+            emailed: !!existing.emailed
+          });
+        }
+      } catch (lookupErr) {
+        console.error('Could not verify duplicate submission:', lookupErr);
+      }
+    }
     console.error('Submission error:', err);
     res.status(500).json({ ok: false, error: 'Could not record test response.' });
   }

@@ -1,5 +1,7 @@
 # Performance, smoothness and correctness audit
 
+The measurements and broad browser checks below are historical results from the earlier frontend. The repository now includes a React/Vite frontend, so those results should not be treated as current React-build measurements unless explicitly re-run.
+
 Lighthouse (mobile profile, throttled), before → after, home page: Performance 94 → 98, Accessibility 100, Best Practices 96 → 100, SEO 100. CLS 0, TBT 20 ms, LCP 2.3 s. Test route: Performance 100, Best Practices 100.
 
 ## What changed
@@ -24,4 +26,24 @@ Direct URL to Profile/Plan shows the "No data yet" state (flower logo, progress 
 - Colour contrast: the bronze (#A27C3F) used for small labels and eyebrows is 3.7:1 on cream; WCAG AA needs 4.5:1. Left unchanged because it is a palette decision. Using rust (#A8450F, 6.4:1) for those small texts clears it.
 - Firefox, Safari/iOS and real phones were not tested here (only Chromium is installed). Fallbacks for `backdrop-filter` and `-webkit-` prefixes are in place.
 - Age/Gender/Role stay compulsory (you asked for that), unlike the brief's "optional".
-- Not applicable to this build: React/Framer Motion items (memo, contexts, AnimatePresence), bundle splitting (no bundler; the admin page is server-side and never sent to visitors), SVG chart libraries (none used).
+- React/Vite frontend: memoized question cards and split contexts are in use; Profile, Action Plan, Admin and History are lazy-loaded into separate chunks. Route transitions use CSS rather than Framer Motion. The server now serves `dist/` before the legacy `public/` fallback, so production uses the built React app when present. The SVG chart library remains unused.
+
+## React/Vite verification update
+
+- `npm.cmd run build` passed and emitted separate chunks for Profile, Action Plan, Admin and History.
+- `node --check` passed for the edited legacy and server JavaScript; `git diff --check` passed.
+- Chromium smoke checks at 320, 375, 768, 1024 and 1440 px found document scroll width equal to the document client width. The mobile navigation also opens without introducing horizontal overflow.
+- A direct `#/profile` visit without a result redirects to the test; locked profile links are removed from the tab order. Browser Back/Forward between test steps restored the expected step.
+- The all-minimum and all-maximum answer sets scored 96 and 480 respectively, at the lowest and highest result levels.
+- An isolated API smoke test confirmed retries reuse the same submission, changed answers with the same ID return 409, and only one fallback-store row is written.
+- No console errors or warnings appeared during the route-gating and mobile-navigation checks.
+
+The historical Lighthouse scores and full-suite claims above were not re-run against the current React/Vite build. Still outstanding: the complete 96-question keyboard flow, PDF export checks, Lighthouse/axe, offline reload, and Safari/Firefox/physical-device testing.
+
+## Local design-drift diagnosis
+
+The served Vite page had valid asset paths, a single stylesheet, working self-hosted fonts, the viewport meta tag, the global box-sizing/body reset, and no browser-console or failed-request errors. The production build also emits the referenced hashed React assets; its public assets are available from the `dist/` fallback. The current development page has no service-worker controller, so stale service-worker assets did not explain the mismatch.
+
+The visual regression came from stylesheet drift: `src/index.css` had the shared base rules but lacked the later shared design layer already present in `public/css/styles.css`. At the same 390 px viewport, comparison showed the React hero title using Jost instead of Cormorant Garamond, regular instead of light lead text, no pill/glass treatments or active gold navigation underline, pill-shaped rather than 12 px CTA corners, side-by-side mobile CTAs, and a browser-default 15 px scrollbar instead of the established 8 px scrollbar. These caused measurable text-flow and content-width differences even though CSS and fonts loaded successfully.
+
+Restored those existing shared visual values in `src/index.css` without changing the palette or component structure. After the fix, React and legacy hero heading/lead typography and positions matched at 390 px; mobile CTAs stack below 480 px and return to intrinsic sizing above it. Checks at 320, 375, 390, 640, 768, 1024, and 1440 px reported no horizontal overflow, four loaded font faces, and no console or request errors.

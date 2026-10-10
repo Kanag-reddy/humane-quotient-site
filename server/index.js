@@ -33,15 +33,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api', submissionRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Static assets (images, fonts from public)
+// Serve built React app from dist if present
+const DIST_DIR = path.join(__dirname, '..', 'dist');
+app.use(express.static(DIST_DIR));
+
+// Keep public assets as the development/fallback source when no production build exists.
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC_DIR, {
   maxAge: '1d'
 }));
-
-// Serve built React app from dist if present
-const DIST_DIR = path.join(__dirname, '..', 'dist');
-app.use(express.static(DIST_DIR));
 
 app.get('/{*splat}', (req, res, next) => {
   if (req.path.startsWith('/api/')) {

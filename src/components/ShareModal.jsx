@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MailIcon } from './Icons';
+import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
 
 export function ShareModal({ isOpen, onClose, result, userName }) {
+  const dialogRef = useDialogAccessibility(isOpen, onClose);
+  const closeTimerRef = useRef(null);
   const [targetEmail, setTargetEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState({ message: '', error: false });
+
+  useEffect(() => () => clearTimeout(closeTimerRef.current), []);
 
   if (!isOpen) return null;
 
@@ -29,7 +34,7 @@ export function ShareModal({ isOpen, onClose, result, userName }) {
         setStatus({ message: data.error || 'Failed to send report.', error: true });
       } else {
         setStatus({ message: `Report successfully dispatched to ${targetEmail}!`, error: false });
-        setTimeout(() => {
+        closeTimerRef.current = setTimeout(() => {
           onClose();
           setStatus({ message: '', error: false });
           setTargetEmail('');
@@ -44,7 +49,7 @@ export function ShareModal({ isOpen, onClose, result, userName }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div ref={dialogRef} className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabIndex={-1}>
         <button className="modal-close" onClick={onClose} aria-label="Close modal">
           ×
         </button>

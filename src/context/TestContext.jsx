@@ -1,28 +1,50 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { score as calculateScore, totalQuestions } from '../data/huqData';
 import { useAuth } from './AuthContext';
 
 const TestContext = createContext();
+const TestRoutingContext = createContext();
+const TestResultContext = createContext();
+
+function readSessionJson(key, fallback) {
+  try {
+    const saved = sessionStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch (error) {
+    console.error(`Could not restore ${key} from this browser session.`, error);
+    return fallback;
+  }
+}
+
+function readSessionText(key, fallback = '') {
+  try {
+    return sessionStorage.getItem(key) || fallback;
+  } catch (error) {
+    console.error(`Could not restore ${key} from this browser session.`, error);
+    return fallback;
+  }
+}
+
+function writeSession(key, value) {
+  try {
+    sessionStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+  } catch (error) {
+    console.error(`Could not persist ${key} in this browser session.`, error);
+  }
+}
 
 export function TestProvider({ children }) {
   const { user, token } = useAuth();
 
   const [answers, setAnswers] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('huq_answers');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === totalQuestions) return parsed;
-      }
-    } catch (e) {}
+    const parsed = readSessionJson('huq_answers', null);
+    if (Array.isArray(parsed) && parsed.length === totalQuestions) return parsed;
     return Array(totalQuestions).fill(0);
   });
 
   const [demographics, setDemographics] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('huq_demographics');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    const saved = readSessionJson('huq_demographics', null);
+    if (saved) return saved;
     return {
       name: '',
       email: '',
@@ -38,19 +60,16 @@ export function TestProvider({ children }) {
     };
   });
 
-  const [result, setResult] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('huq_result');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return null;
-  });
+  const [result, setResult] = useState(() => readSessionJson('huq_result', null));
 
-  const [step, setStep] = useState(0);
-  const [phase, setPhase] = useState('intro'); // 'intro', 'step', 'saving', 'profile'
-  const [submissionId, setSubmissionId] = useState(() => sessionStorage.getItem('huq_subId') || '');
-  const [isSubmitted, setIsSubmitted] = useState(() => sessionStorage.getItem('huq_submitted') === 'true');
-  const [emailed, setEmailed] = useState(() => sessionStorage.getItem('huq_emailed') === 'true');
+  const [step, setStep] = useState(() => {
+    const saved = Number(window.history.state?.huqStep);
+    return Number.isInteger(saved) && saved >= 0 && saved < 8 ? saved : 0;
+  });
+  const [phase, setPhase] = useState(() => window.history.state?.huqPhase === 'step' ? 'step' : 'intro');
+  const [submissionId, setSubmissionId] = useState(() => readSessionText('huq_subId'));
+  const [isSubmitted, setIsSubmitted] = useState(() => readSessionText('huq_submitted') === 'true');
+  const [emailed, setEmailed] = useState(() => readSessionText('huq_emailed') === 'true');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync logged in user name and email to demographics if available
@@ -64,22 +83,22 @@ export function TestProvider({ children }) {
     }
   }, [user]);
 
-  const setAnswer = (index, mark) => {
+  const setAnswer = useCallback((index, mark) => {
     setAnswers((prev) => {
       const updated = [...prev];
       updated[index] = mark;
-      sessionStorage.setItem('huq_answers', JSON.stringify(updated));
+      writeSession('huq_answers', updated);
       return updated;
     });
-  };
+  }, []);
 
-  const updateDemographics = (fields) => {
+  const updateDemographics = useCallback((fields) => {
     setDemographics((prev) => {
       const updated = { ...prev, ...fields };
-      sessionStorage.setItem('huq_demographics', JSON.stringify(updated));
+      writeSession('huq_demographics', updated);
       return updated;
     });
-  };
+  }, []);
 
   const isComplete = answers.every((x) => x >= 1 && x <= 5);
 
@@ -87,7 +106,7 @@ export function TestProvider({ children }) {
     if (isComplete) {
       const res = calculateScore(answers);
       setResult(res);
-      sessionStorage.setItem('huq_result', JSON.stringify(res));
+      writeSession('huq_result', res);
       return res;
     }
     return null;
@@ -127,9 +146,9 @@ export function TestProvider({ children }) {
       setSubmissionId(data.id);
       setIsSubmitted(true);
       setEmailed(!!data.emailed);
-      sessionStorage.setItem('huq_subId', data.id);
-      sessionStorage.setItem('huq_submitted', 'true');
-      sessionStorage.setItem('huq_emailed', String(!!data.emailed));
+      writeSession('huq_subId', data.id);
+      writeSession('huq_submitted', 'true');
+      writeSession('huq_emailed', String(!!data.emailed));
 
       return data;
     } finally {
@@ -137,7 +156,7 @@ export function TestProvider({ children }) {
     }
   };
 
-  const resetTest = () => {
+  const resetTest = useCallback(() => {
     const freshAnswers = Array(totalQuestions).fill(0);
     setAnswers(freshAnswers);
     setResult(null);
@@ -146,12 +165,14 @@ export function TestProvider({ children }) {
     setSubmissionId('');
     setIsSubmitted(false);
     setEmailed(false);
-    sessionStorage.removeItem('huq_answers');
-    sessionStorage.removeItem('huq_result');
-    sessionStorage.removeItem('huq_subId');
-    sessionStorage.removeItem('huq_submitted');
-    sessionStorage.removeItem('huq_emailed');
-  };
+    ['huq_answers', 'huq_result', 'huq_subId', 'huq_submitted', 'huq_emailed'].forEach((key) => {
+      try {
+        sessionStorage.removeItem(key);
+      } catch (error) {
+        console.error(`Could not clear ${key} from this browser session.`, error);
+      }
+    });
+  }, []);
 
   const loadSavedResult = (savedResult, savedAnswers = null, savedDemo = null) => {
     setResult(savedResult);
@@ -180,12 +201,35 @@ export function TestProvider({ children }) {
     resetTest,
     loadSavedResult
   };
+  const routingValue = useMemo(
+    () => ({ result, step, phase, setStep, setPhase, resetTest }),
+    [result, step, phase, resetTest]
+  );
+  const resultValue = useMemo(() => ({ result }), [result]);
 
-  return <TestContext.Provider value={value}>{children}</TestContext.Provider>;
+  return (
+    <TestResultContext.Provider value={resultValue}>
+      <TestRoutingContext.Provider value={routingValue}>
+        <TestContext.Provider value={value}>{children}</TestContext.Provider>
+      </TestRoutingContext.Provider>
+    </TestResultContext.Provider>
+  );
 }
 
 export function useTest() {
   const context = useContext(TestContext);
   if (!context) throw new Error('useTest must be used within TestProvider');
+  return context;
+}
+
+export function useTestRouting() {
+  const context = useContext(TestRoutingContext);
+  if (!context) throw new Error('useTestRouting must be used within TestProvider');
+  return context;
+}
+
+export function useTestResult() {
+  const context = useContext(TestResultContext);
+  if (!context) throw new Error('useTestResult must be used within TestProvider');
   return context;
 }

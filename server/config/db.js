@@ -60,6 +60,13 @@ const db = {
     return await fallbackStore.createSubmission(subData);
   },
 
+  async findSubmissionById(submissionId) {
+    if (isMongoConnected) {
+      return await Submission.findOne({ submissionId });
+    }
+    return await fallbackStore.findSubmissionById(submissionId);
+  },
+
   async getSubmissionsByEmail(email) {
     if (isMongoConnected) {
       return await Submission.find({ email: String(email).toLowerCase() }).sort({ createdAt: -1 });

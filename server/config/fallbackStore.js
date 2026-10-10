@@ -7,21 +7,30 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const STORE_PATH = path.join(DATA_DIR, 'local_db.json');
 
 function readStore() {
-  try {
-    if (fs.existsSync(STORE_PATH)) {
+  if (fs.existsSync(STORE_PATH)) {
+    try {
       return JSON.parse(fs.readFileSync(STORE_PATH, 'utf8'));
+    } catch (e) {
+      console.error('Error reading fallback store:', e);
+      throw e;
     }
-  } catch (e) {
-    console.error('Error reading fallback store:', e);
   }
   return { users: [], submissions: [] };
 }
 
 function writeStore(data) {
+  const tempPath = STORE_PATH + '.tmp';
   try {
-    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tempPath, STORE_PATH);
   } catch (e) {
+    try {
+      fs.unlinkSync(tempPath);
+    } catch (cleanupError) {
+      if (cleanupError.code !== 'ENOENT') console.error('Error cleaning fallback store temp file:', cleanupError);
+    }
     console.error('Error writing fallback store:', e);
+    throw e;
   }
 }
 
@@ -50,6 +59,8 @@ const fallbackStore = {
 
   async createSubmission(subData) {
     const store = readStore();
+    const existing = store.submissions.find((s) => s.submissionId === subData.submissionId);
+    if (existing) return existing;
     const newSub = {
       id: 'HuQ-' + crypto.randomBytes(4).toString('hex').toUpperCase(),
       ...subData,
@@ -58,6 +69,11 @@ const fallbackStore = {
     store.submissions.push(newSub);
     writeStore(store);
     return newSub;
+  },
+
+  async findSubmissionById(submissionId) {
+    const store = readStore();
+    return store.submissions.find((s) => s.submissionId === submissionId) || null;
   },
 
   async getSubmissionsByEmail(email) {

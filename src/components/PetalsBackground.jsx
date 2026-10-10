@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 function petalPath(r0, L, w) {
   const d = L - r0;
@@ -6,6 +6,14 @@ function petalPath(r0, L, w) {
 }
 
 export function PetalsBackground() {
+  const [paused, setPaused] = useState(() => document.visibilityState !== 'visible');
+
+  useEffect(() => {
+    const updateVisibility = () => setPaused(document.visibilityState !== 'visible');
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
+
   const items = Array.from({ length: 9 }, (_, i) => {
     const left = 4 + ((i * 11.3) % 92);
     const size = 26 + ((i * 17) % 40);
@@ -34,7 +42,7 @@ export function PetalsBackground() {
   });
 
   return (
-    <div className="petals" aria-hidden="true">
+    <div className={`petals ${paused ? 'paused' : ''}`} aria-hidden="true">
       {items}
     </div>
   );

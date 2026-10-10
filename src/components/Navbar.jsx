@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTest } from '../context/TestContext';
+import { useTestResult } from '../context/TestContext';
 import { UserIcon, ShieldIcon, LogoutIcon } from './Icons';
 
 export function Navbar({ currentRoute, setCurrentRoute }) {
   const { user, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
-  const { result } = useTest();
+  const { result } = useTestResult();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navigate = (route) => {
@@ -82,6 +82,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
             if (result) navigate('profile');
           }}
           aria-disabled={!result}
+          tabIndex={result ? undefined : -1}
         >
           My Profile
         </a>
@@ -94,6 +95,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
             if (result) navigate('plan');
           }}
           aria-disabled={!result}
+          tabIndex={result ? undefined : -1}
         >
           Action Plan
         </a>

@@ -1,10 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { useTest } from '../context/TestContext';
 import { useAuth } from '../context/AuthContext';
 import { values, questions, options, profileOptions, totalQuestions } from '../data/huqData';
 import { ValueIcon } from '../components/Icons';
 
-export function TestView({ onFinishTest, onGoProfile }) {
+const QuestionCard = memo(function QuestionCard({ question, valueKey, answer, index, onSelect }) {
+  return (
+    <div
+      id={`q-card-${question.index}`}
+      className={`q ${answer ? 'ans' : ''}`}
+      style={{ '--k': index }}
+    >
+      <span className="qn" aria-hidden="true">
+        <ValueIcon name={valueKey} size={18} />
+      </span>
+      <p className="qt" id={`qt-${question.index}`}>
+        {question.text}
+      </p>
+      <div className="scale" role="radiogroup" aria-labelledby={`qt-${question.index}`}>
+        {options.map((option) => (
+          <label key={option.marks} className={`opt o${option.marks}`}>
+            <input
+              type="radio"
+              name={`q-${question.index}`}
+              value={option.marks}
+              checked={answer === option.marks}
+              onChange={() => onSelect(question.index, option.marks)}
+            />
+            <span className="dot" />
+            <span className="lbl">{option.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const {
     answers,
@@ -24,6 +56,24 @@ export function TestView({ onFinishTest, onGoProfile }) {
   const [formErr, setFormErr] = useState('');
   const [savingErr, setSavingErr] = useState('');
   const scrollTimeoutRef = useRef(null);
+  const finishTimeoutRef = useRef(null);
+  const latestAnswersRef = useRef(answers);
+  const latestStepRef = useRef(step);
+  latestAnswersRef.current = answers;
+  latestStepRef.current = step;
+
+  useEffect(() => () => {
+    clearTimeout(scrollTimeoutRef.current);
+    clearTimeout(finishTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== 'step') return undefined;
+    const frame = requestAnimationFrame(() => {
+      document.querySelector('.step-head h1')?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [phase, step]);
 
   // Sync user info into demographics if logged in
   useEffect(() => {
@@ -88,7 +138,6 @@ export function TestView({ onFinishTest, onGoProfile }) {
       return;
     }
 
-    setPhase('step');
     // Start at first incomplete step
     let startStep = 0;
     for (let s = 0; s < 8; s++) {
@@ -97,22 +146,26 @@ export function TestView({ onFinishTest, onGoProfile }) {
         break;
       }
     }
-    setStep(startStep);
+    if (onStepChange) onStepChange(startStep, 'step');
+    else {
+      setStep(startStep);
+      setPhase('step');
+    }
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  const handleOptionSelect = (qIndex, mark) => {
+  const handleOptionSelect = useCallback((qIndex, mark) => {
     setAnswer(qIndex, mark);
 
     // Debounced smooth scroll to the next unanswered question in this step
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
-      const stepStart = step * 12;
+      const stepStart = latestStepRef.current * 12;
       const stepEnd = stepStart + 12;
       let nextUnanswered = null;
 
       for (let i = stepStart; i < stepEnd; i++) {
-        if (i !== qIndex && !answers[i]) {
+        if (i !== qIndex && !latestAnswersRef.current[i]) {
           nextUnanswered = i;
           break;
         }
@@ -122,12 +175,13 @@ export function TestView({ onFinishTest, onGoProfile }) {
         const el = document.getElementById(`q-card-${nextUnanswered}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 280);
-  };
+    }, 300);
+  }, [setAnswer]);
 
   const handleNextStep = async () => {
     if (step < 7) {
-      setStep(step + 1);
+      if (onStepChange) onStepChange(step + 1, 'step');
+      else setStep(step + 1);
       window.scrollTo({ top: 0, behavior: 'instant' });
     } else {
       // Completed all 8 steps! Submit test
@@ -135,7 +189,7 @@ export function TestView({ onFinishTest, onGoProfile }) {
       setSavingErr('');
       try {
         await submitTest(true);
-        setTimeout(() => {
+        finishTimeoutRef.current = setTimeout(() => {
           onFinishTest();
         }, 1100);
       } catch (err) {
@@ -146,9 +200,11 @@ export function TestView({ onFinishTest, onGoProfile }) {
 
   const handlePrevStep = () => {
     if (step === 0) {
-      setPhase('intro');
+      if (onStepChange) onStepChange(step, 'intro');
+      else setPhase('intro');
     } else {
-      setStep(step - 1);
+      if (onStepChange) onStepChange(step - 1, 'step');
+      else setStep(step - 1);
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
@@ -536,8 +592,17 @@ export function TestView({ onFinishTest, onGoProfile }) {
                 role="button"
                 tabIndex={0}
                 onClick={() => {
-                  setStep(i);
+                  if (onStepChange) onStepChange(i, 'step');
+                  else setStep(i);
                   window.scrollTo({ top: 0, behavior: 'instant' });
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    if (onStepChange) onStepChange(i, 'step');
+                    else setStep(i);
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                  }
                 }}
                 aria-label={`Step ${i + 1}: ${v.name}`}
               >
@@ -557,7 +622,7 @@ export function TestView({ onFinishTest, onGoProfile }) {
           aria-valuemax={totalQuestions}
           aria-valuenow={totalAnsweredCount}
         >
-          <i style={{ width: `${(totalAnsweredCount / totalQuestions) * 100}%` }} />
+          <i style={{ '--progress': totalAnsweredCount / totalQuestions }} />
         </div>
       </div>
 
@@ -576,40 +641,16 @@ export function TestView({ onFinishTest, onGoProfile }) {
             </p>
           </div>
 
-          {stepQuestions.map((q, k) => {
-            const ans = answers[q.index];
-            return (
-              <div
-                key={q.id}
-                id={`q-card-${q.index}`}
-                className={`q ${ans ? 'ans' : ''}`}
-                style={{ '--k': k }}
-              >
-                <span className="qn" aria-hidden="true">
-                  <ValueIcon name={currentVal.key} size={18} />
-                </span>
-                <p className="qt" id={`qt-${q.index}`}>
-                  {q.text}
-                </p>
-
-                <div className="scale" role="radiogroup" aria-labelledby={`qt-${q.index}`}>
-                  {options.map((opt) => (
-                    <label key={opt.marks} className={`opt o${opt.marks}`}>
-                      <input
-                        type="radio"
-                        name={`q-${q.index}`}
-                        value={opt.marks}
-                        checked={ans === opt.marks}
-                        onChange={() => handleOptionSelect(q.index, opt.marks)}
-                      />
-                      <span className="dot" />
-                      <span className="lbl">{opt.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          {stepQuestions.map((question, index) => (
+            <QuestionCard
+              key={question.id}
+              question={question}
+              valueKey={currentVal.key}
+              answer={answers[question.index]}
+              index={index}
+              onSelect={handleOptionSelect}
+            />
+          ))}
 
           <div className="nav-row">
             <button className="btn ghost" type="button" onClick={handlePrevStep}>

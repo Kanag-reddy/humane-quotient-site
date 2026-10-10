@@ -34,7 +34,7 @@ export function FlowerSVG({ result, onReplay, isBlooming = true }) {
         <g key={`track-${i}`} transform={`rotate(${i * 45})`}>
           <path
             className="bt"
-            style={{ animationDelay: `${(0.2 + i * 0.07).toFixed(2)}s` }}
+            style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}
             d={petalPath(R0, L1, 68)}
             fill="#E4D5CB"
             fillOpacity="0.55"
@@ -57,7 +57,7 @@ export function FlowerSVG({ result, onReplay, isBlooming = true }) {
               <g transform={`rotate(${i * 45})`}>
                 <path
                   className="bp"
-                  style={{ animationDelay: `${(0.7 + i * 0.08).toFixed(2)}s` }}
+                  style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}
                   d={petalPath(R0, len, 50)}
                   fill={levels[v.level].color}
                   fillOpacity="0.95"
@@ -67,7 +67,7 @@ export function FlowerSVG({ result, onReplay, isBlooming = true }) {
               </g>
               {top && (
                 <g transform={`translate(${sx.toFixed(1)},${sy.toFixed(1)})`}>
-                  <g className="bs" style={{ animationDelay: `${(1.5 + i * 0.07).toFixed(2)}s` }}>
+                  <g className="bs" style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}>
                     <path
                       transform="scale(1.5)"
                       d="M0,-9 2.6,-3 9,-2.5 4.2,1.8 5.6,8 0,4.7 -5.6,8 -4.2,1.8 -9,-2.5 -2.6,-3Z"
@@ -91,7 +91,7 @@ export function FlowerSVG({ result, onReplay, isBlooming = true }) {
         if (i === 4) ly += 8;
 
         return (
-          <g key={`lbl-${i}`} className="bl" style={{ animationDelay: `${(1.4 + i * 0.06).toFixed(2)}s` }}>
+          <g key={`lbl-${i}`} className="bl" style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}>
             <text
               x={lx.toFixed(1)}
               y={(ly - 2).toFixed(1)}

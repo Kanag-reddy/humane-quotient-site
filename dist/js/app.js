@@ -9,10 +9,50 @@
   document.addEventListener('touchstart', function () {}, { passive: true });   // lets iOS Safari apply :active press feedback
 
   /* ---------------- state ---------------- */
+  let storageUnavailable = false;
+  function showStorageWarning() {
+    if (!$app.firstElementChild) return;
+    let warning = document.getElementById('storageWarning');
+    if (!warning) {
+      warning = document.createElement('p');
+      warning.id = 'storageWarning';
+      warning.className = 'storage-warning';
+      warning.setAttribute('role', 'status');
+      $app.prepend(warning);
+    }
+    warning.textContent = 'This browser could not save your progress locally. Keep this tab open or your answers may be lost if it closes.';
+  }
+  function storageError(action, key, error) {
+    storageUnavailable = true;
+    console.error(`Unable to ${action} HuQ session data (${key}).`, error);
+    showStorageWarning();
+  }
   const store = {
-    get(k) { try { return JSON.parse(sessionStorage.getItem(k)); } catch (e) { return null; } },
-    set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } },
-    del(k) { try { sessionStorage.removeItem(k); } catch (e) { /* ignore */ } }
+    get(k) {
+      try {
+        const value = sessionStorage.getItem(k);
+        return value === null ? null : JSON.parse(value);
+      } catch (e) {
+        storageError('read', k, e);
+        return null;
+      }
+    },
+    set(k, v) {
+      try {
+        sessionStorage.setItem(k, JSON.stringify(v));
+        return true;
+      } catch (e) {
+        storageError('save', k, e);
+        return false;
+      }
+    },
+    del(k) {
+      try {
+        sessionStorage.removeItem(k);
+      } catch (e) {
+        storageError('clear', k, e);
+      }
+    }
   };
   const state = {
     answers: Array(H.totalQuestions).fill(0),
@@ -24,7 +64,13 @@
     if (Array.isArray(a) && a.length === H.totalQuestions) state.answers = a;
     const d = store.get('huq.demo'); if (d) state.demo = d;
     state.sent = !!store.get('huq.sent'); state.mailed = !!store.get('huq.mailed');
+    state.subId = store.get('huq.subId') || '';
     if (complete()) state.result = H.score(state.answers);
+    const savedRoute = location.hash.replace(/^#\/?/, '').split('?')[0];
+    if (savedRoute === 'test' && history.state && history.state.huqPhase) {
+      state.phase = history.state.huqPhase === 'step' ? 'step' : 'intro';
+      state.step = clamp(Number(history.state.huqStep) || 0, 0, 7);
+    }
   })();
   function complete() { return state.answers.every((x) => x >= 1 && x <= 5); }
 
@@ -171,7 +217,7 @@
   function countUp(root) {
     if (reduced()) return;
     root.querySelectorAll('[data-count]').forEach((el) => {
-      const to = parseFloat(el.dataset.count), dur = 900, t0 = performance.now();
+      const to = parseFloat(el.dataset.count), dur = 600, t0 = performance.now();
       let raf = 0;
       const tick = (t) => {
         const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
@@ -232,8 +278,24 @@
   /* ---------------- router ---------------- */
   const routes = { '': home, about: home, test: test, profile: profile, plan: plan };
   function currentRoute() { return (location.hash.replace(/^#\/?/, '') || '').split('?')[0]; }
-  let navToken = 0, firstPaint = true;
+  let navToken = 0, firstPaint = true, routeTimer = 0;
+  function testHistory(phase, step, replace) {
+    const currentState = history.state && typeof history.state === 'object' ? history.state : {};
+    const method = replace ? 'replaceState' : 'pushState';
+    history[method]({ ...currentState, huqPhase: phase, huqStep: step }, '', location.href);
+  }
+  function restoreTestHistory() {
+    if (currentRoute() === 'test' && history.state && typeof history.state === 'object') {
+      if (history.state.huqPhase === 'step' || history.state.huqPhase === 'intro') {
+        state.phase = history.state.huqPhase;
+        state.step = clamp(Number(history.state.huqStep) || 0, 0, 7);
+      }
+    }
+    route();
+  }
   function route() {
+    clearTimeout(routeTimer);
+    routeTimer = 0;
     const r = currentRoute();
     const known = Object.prototype.hasOwnProperty.call(routes, r);
     const empty = known && (r === 'profile' || r === 'plan') && !state.result;      // no results yet: show the empty state, not a blank page
@@ -244,6 +306,7 @@
       teardown();
       $app.classList.remove('out');
       try { if (!known) notFoundView(); else if (empty) emptyView(r); else routes[r](r); } catch (err) { console.error(err); errorView(); }
+      if (storageUnavailable) showStorageWarning();
       if (!reduced() && $app.animate) $app.animate([{ opacity: 0, transform: 'translate3d(14px,0,0)' }, { opacity: 1, transform: 'none' }], { duration: 350, easing: 'cubic-bezier(.22,1,.36,1)' });
       if (r !== 'about') window.scrollTo({ top: 0, behavior: 'instant' });
       observeReveal();
@@ -251,7 +314,10 @@
     };
     if (firstPaint || reduced() || !$app.firstElementChild) { firstPaint = false; render(); return; }
     $app.classList.add('out');                           // exit (150 ms), then enter
-    setTimeout(render, 150);
+    routeTimer = setTimeout(() => {
+      routeTimer = 0;
+      render();
+    }, 150);
   }
   $nav.addEventListener('click', (e) => { const a = e.target.closest('a[aria-disabled="true"]'); if (a) e.preventDefault(); });
   function setNav(r) {
@@ -267,7 +333,7 @@
     root = root || $app;
     const els = Array.from(root.querySelectorAll('.rv'));
     const seen = new Map();
-    els.forEach((e) => { const p = e.parentElement; const n = seen.get(p) || 0; seen.set(p, n + 1); e.style.transitionDelay = (n % 3) * 80 + 'ms'; });   // stagger: 0 / 80 / 160 ms
+    els.forEach((e) => { const p = e.parentElement; const n = seen.get(p) || 0; seen.set(p, n + 1); e.style.transitionDelay = Math.min(n, 1) * 80 + 'ms'; });
     if (!late) { petals(); parallaxInit(); }
     if (!('IntersectionObserver' in window)) return;
     if (late) els.forEach((e) => e.classList.add('pre'));                       // content revealed by a click: every block fades in as it scrolls into view
@@ -488,6 +554,7 @@
       store.set('huq.demo', state.demo);
       state.phase = 'step';
       state.step = firstIncompleteStep();
+      testHistory('step', state.step);
       testStep(); window.scrollTo({ top: 0, behavior: 'instant' });
     };
     function val(id) { return document.getElementById(id).value; }
@@ -498,7 +565,7 @@
   }
   function resetAll() {
     state.answers = Array(H.totalQuestions).fill(0); state.result = null; state.sent = false; state.mailed = false; state.subId = ''; state.phase = 'intro'; state.step = 0;
-    store.del('huq.answers'); store.del('huq.sent'); store.del('huq.mailed');
+    store.del('huq.answers'); store.del('huq.sent'); store.del('huq.mailed'); store.del('huq.subId');
   }
 
   function testStep() {
@@ -520,7 +587,7 @@
       <div class="test" style="padding-top:0"><div class="t-narrow">
         <div class="step-head"><div class="ico">${icon(v.key, 36)}</div>
           <span class="eyebrow" style="margin-bottom:.4rem">${v.facet}</span>
-          <h1>${v.name}</h1><p>${v.definition} Think of a typical week.</p></div>
+          <h1 tabindex="-1">${v.name}</h1><p>${v.definition} Think of a typical week.</p></div>
         ${qs}
         <div class="nav-row">
           <button class="btn ghost" id="back">← ${s === 0 ? 'Back to start' : 'Previous step'}</button>
@@ -554,11 +621,21 @@
       }, 300);                                                     // let the selection register first
     }));
     document.getElementById('back').onclick = () => {
-      if (s === 0) { state.phase = 'intro'; testIntro(); } else { state.step--; testStep(); }
+      if (s === 0) { state.phase = 'intro'; testHistory('intro', state.step); testIntro(); }
+      else { state.step--; testHistory('step', state.step); testStep(); }
+      const heading = $app.querySelector('.step-head h1');
+      if (heading) heading.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: 'instant' });
     };
     next.onclick = () => {
-      if (s < 7) { state.step++; testStep(); window.scrollTo({ top: 0, behavior: 'instant' }); }
+      if (s < 7) {
+        state.step++;
+        testHistory('step', state.step);
+        testStep();
+        const heading = $app.querySelector('.step-head h1');
+        if (heading) heading.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
       else finish();
     };
   }
@@ -572,21 +649,24 @@
     if (state.sent) { later(goProfile, 900); return; }
     save();
   }
-  function goProfile() { location.hash = '#/profile'; setTimeout(() => { state.phase = 'intro'; }, 0); }
+  function goProfile() { state.phase = 'intro'; location.hash = '#/profile'; }
   function save() {
     const t0 = Date.now(), ctl = typeof AbortController === 'function' ? new AbortController() : null;
     const timer = ctl ? setTimeout(() => ctl.abort(), 15000) : 0;
+    cleanups.push(() => { clearTimeout(timer); if (ctl) ctl.abort(); });
     if (!state.subId) state.subId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+    store.set('huq.subId', state.subId);
     fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl ? ctl.signal : undefined,
       body: JSON.stringify({ answers: state.answers, demographics: state.demo, name: state.demo.name, email: state.demo.email, submissionId: state.subId }) })
       .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
       .then(({ ok, j }) => {
         if (!ok || !j || !j.ok) throw new Error((j && j.error) || 'save failed');
+        if (state.phase !== 'saving' || currentRoute() !== 'test') return;
         state.sent = true; store.set('huq.sent', true); state.mailed = !!j.emailed; store.set('huq.mailed', state.mailed);
-        setTimeout(goProfile, Math.max(0, 1300 - (Date.now() - t0)));
+        later(goProfile, Math.max(0, 1000 - (Date.now() - t0)));
       })
       .catch((e) => saveFailed(e && e.name === 'AbortError' ? 'The connection timed out.' : (e && e.message && !/fetch|network|load failed/i.test(e.message) ? e.message : 'We could not reach the server.')))
-      .then(() => clearTimeout(timer));
+      .finally(() => clearTimeout(timer));
   }
   function saveFailed(msg) {
     if (state.phase !== 'saving') return;
@@ -707,25 +787,25 @@
         showHero(); showRest(); bindReplay(); return;
       }
       /* 1. note where the flower is, 2. switch to the final two-column layout, 3. hold the flower there and glide it home later (FLIP) */
-      const c0 = stack.getBoundingClientRect(), hPre = card.offsetHeight;
+      const c0 = stack.getBoundingClientRect();
       details.classList.add('fx-pre'); legendEl.classList.add('fx-pre');
       card.classList.remove('locked');
-      const c1 = stack.getBoundingClientRect(), hFinal = card.offsetHeight;
+      const c1 = stack.getBoundingClientRect();
       const inv = `translate(${(c0.left + c0.width / 2) - (c1.left + c1.width / 2)}px,${(c0.top + c0.height / 2) - (c1.top + c1.height / 2)}px) scale(${c0.width / c1.width})`;
-      stack.animate([{ transform: inv }, { transform: inv, offset: .56 }, { transform: 'none' }], { duration: 2500, easing: 'cubic-bezier(.22,1,.36,1)' });
-      const grow = card.animate([{ height: hPre + 'px' }, { height: hFinal + 'px' }], { duration: 1000, delay: 900, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' });
-      grow.onfinish = () => grow.cancel();
-      const fade = cta.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 350, fill: 'forwards' });
+      const glide = stack.animate([{ transform: inv }, { transform: inv, offset: .25 }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.22,1,.36,1)' });
+      cleanups.push(() => glide.cancel());
+      const fade = cta.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' });
+      cleanups.push(() => fade.cancel());
       fade.onfinish = () => cta.remove();
       bud.classList.add('open');                                                // 0.00 s  the bud opens
-      later(() => real.classList.add('go'), 250);                               // 0.25    the real flower blooms in its place
-      later(() => bud.remove(), 1500);
-      later(() => { details.classList.remove('fx-pre'); legendEl.classList.remove('fx-pre'); }, 1400);   // 1.40    the flower glides left; the scores slide in
-      later(showHero, 2300);                                                    // 2.30    the page opens upward: the overall score
-      later(() => countUp(heroRes), 2700);
-      later(() => { if (res.level >= 1) confetti(hero); }, 2900);
-      later(bindReplay, 2600);
-      later(showRest, 3000);                                                    // 3.00    the rest of the profile
+      later(() => real.classList.add('go'), 200);
+      later(() => bud.remove(), 500);
+      later(() => { details.classList.remove('fx-pre'); legendEl.classList.remove('fx-pre'); }, 400);
+      later(showHero, 750);
+      later(() => countUp(heroRes), 850);
+      later(() => { if (res.level >= 1) confetti(hero); }, 900);
+      later(bindReplay, 700);
+      later(showRest, 1000);
     }
     q('#revealBtn').addEventListener('click', reveal, { once: true });
   }
@@ -802,10 +882,17 @@
   }
 
   /* ---------------- boot ---------------- */
-  window.addEventListener('hashchange', () => { if (state.phase === 'saving' && currentRoute() !== 'profile') state.phase = 'intro'; route(); });
+  function onHistoryNavigation() {
+    if (state.phase === 'saving' && currentRoute() !== 'profile') state.phase = 'intro';
+    restoreTestHistory();
+  }
+  window.addEventListener('hashchange', onHistoryNavigation);
+  window.addEventListener('popstate', onHistoryNavigation);
   route();
   window.__huqReady = true; bootDone();
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* offline cache is optional */ }));
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch((error) => {
+      console.warn('HuQ offline support could not be enabled.', error);
+    }));
   }
 })();

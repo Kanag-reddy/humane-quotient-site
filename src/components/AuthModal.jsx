@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ShieldIcon, UserIcon } from './Icons';
+import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
 
 export function AuthModal() {
   const { authModal, closeAuthModal, setAuthModalMode, login, register } = useAuth();
+  const dialogRef = useDialogAccessibility(authModal.isOpen, closeAuthModal);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +56,7 @@ export function AuthModal() {
 
   return (
     <div className="modal-backdrop" onClick={closeAuthModal}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div ref={dialogRef} className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabIndex={-1}>
         <button className="modal-close" onClick={closeAuthModal} aria-label="Close modal">
           ×
         </button>

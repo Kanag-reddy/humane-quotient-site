@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useTest } from '../context/TestContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,30 +16,47 @@ export function ProfileView({ onGoPlan, onRetake }) {
   const [budOpen, setBudOpen] = useState(false);
   const [bloomActive, setBloomActive] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const animationTimersRef = useRef([]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+    return () => {
+      animationTimersRef.current.forEach(clearTimeout);
+      animationTimersRef.current = [];
+    };
   }, []);
 
+  const clearAnimationTimers = () => {
+    animationTimersRef.current.forEach(clearTimeout);
+    animationTimersRef.current = [];
+  };
+
+  const scheduleAnimation = (callback, delay) => {
+    const timer = setTimeout(callback, delay);
+    animationTimersRef.current.push(timer);
+  };
+
   const handleReveal = () => {
+    clearAnimationTimers();
     setBudOpen(true);
-    setTimeout(() => {
+    scheduleAnimation(() => {
       setRevealed(true);
       setBloomActive(true);
       if (result && result.level >= 1) {
         confetti({
-          particleCount: 70,
+          particleCount: 12,
           spread: 60,
           origin: { y: 0.6 },
           colors: ['#E0AC27', '#C97F1C', '#A8450F', '#850500', '#FFFDE9']
         });
       }
-    }, 400);
+    }, 500);
   };
 
   const handleReplayBloom = () => {
+    clearAnimationTimers();
     setBloomActive(false);
-    setTimeout(() => setBloomActive(true), 50);
+    scheduleAnimation(() => setBloomActive(true), 150);
   };
 
   if (!result) {
