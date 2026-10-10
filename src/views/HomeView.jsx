@@ -222,11 +222,11 @@ export function HomeView({ onStartTest, onOpenAbout }) {
         </div>
       </section>
 
-      <section id="explore">
+      <section id="explore" aria-labelledby="explore-heading">
         <div className="wrap">
           <div style={{ maxWidth: '760px' }}>
             <span className="eyebrow">Explore</span>
-            <h2>Explore the eight values</h2>
+            <h2 id="explore-heading">Explore the eight values</h2>
           </div>
 
           <div className="vals">
@@ -247,6 +247,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
                     className={`hs ${selectedIdx === h.idx ? 'on' : ''}`}
                     onClick={() => setSelectedIdx(h.idx)}
                     aria-label={h.label}
+                    aria-pressed={selectedIdx === h.idx}
                     style={{ left: h.left, top: h.top }}
                   />
                 ))}
@@ -270,9 +271,11 @@ export function HomeView({ onStartTest, onOpenAbout }) {
                 {values.map((x, k) => (
                   <button
                     key={x.key}
+                    type="button"
                     className={k === selectedIdx ? 'on' : ''}
                     onClick={() => setSelectedIdx(k)}
                     aria-label={x.name}
+                    aria-pressed={k === selectedIdx}
                   >
                     {x.name}
                   </button>
