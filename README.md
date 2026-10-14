@@ -16,7 +16,8 @@ Based on the book *“Test Your Humane Quotient”* (First Edition, Revised) by 
 - **Backend**: **Node.js + Express 5**
   - Unified REST API for authentication, submissions, and admin services.
   - **MongoDB** integration with Mongoose models (`User`, `Submission`).
-  - Resilient Data Access Layer (DAL) with automatic persistent JSON fallback if MongoDB is not running locally.
+  - MongoDB is required for all account and submission storage; API requests return an error if the database is unavailable.
+  - Production requires explicit MongoDB, JWT, and administrator environment variables; no default credentials or local database fallback are used.
   - Password hashing with **bcryptjs** and token issuance with **jsonwebtoken (JWT)**.
   - HTML report emailing using **Nodemailer**.
   - Spreadsheet export via **ExcelJS**.
@@ -50,12 +51,12 @@ npm install
 Create or edit `.env` in the project root:
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/huq
-JWT_SECRET=huq_jwt_secret_key_2026_super_secure
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-host>/huq?retryWrites=true&w=majority
+JWT_SECRET=<generate-a-unique-random-secret-of-at-least-32-characters>
 
-# Default Admin Credentials
-ADMIN_EMAIL=admin@huq.org
-ADMIN_PASSWORD=Admin@123
+# Admin account (create/update it with `npm run admin:configure`)
+ADMIN_EMAIL=your-admin@example.com
+ADMIN_PASSWORD=use-a-strong-unique-password
 
 # Optional: Email Service (SMTP)
 # SMTP_HOST=smtp.gmail.com
@@ -65,7 +66,9 @@ ADMIN_PASSWORD=Admin@123
 # MAIL_FROM="Humane Quotient" <your-email@gmail.com>
 ```
 
-> **Note**: If MongoDB is not yet running on your machine or you haven't set up MongoDB Atlas, the backend automatically uses the built-in fallback store (`data/local_db.json`) so all features work immediately out-of-the-box!
+> **Important**: Configure `MONGODB_URI`, `JWT_SECRET` (at least 32 characters), `ADMIN_EMAIL`, and `ADMIN_PASSWORD` before starting the application. The app does not store accounts or submissions locally; API requests return HTTP 503 while MongoDB is unavailable. Run `npm run admin:configure` to create/update the configured admin. This command permanently deletes other admin accounts. Never commit `.env` or enter secrets in source code.
+
+To copy the app's `users` and `submissions` collections from the database named in `MONGODB_URI` into a new `huq` database in the same Atlas cluster, run `npm run db:copy-to-huq` while the URI still points to the source database. The command refuses to overwrite a non-empty `huq` database and leaves the source unchanged. Then change the URI's database path to `/huq` in `.env` and Vercel. MongoDB creates collections (not relational tables); the app uses `users` and `submissions`.
 
 ### 3. Run Development Servers
 - **Backend Server** (Port 5000):
@@ -85,9 +88,11 @@ npm start
 ```
 This builds the React app into `dist/` and runs the Express server on port 5000, serving the static React app and all API endpoints.
 
----
+### 5. Deploy to Vercel
+1. Push the project to GitHub and import its repository into Vercel.
+2. Set the project root to the directory containing `package.json`.
+3. Use the Vite preset, `npm run build` as the build command, and `dist` as the output directory.
+4. Add `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in Vercel's Production environment settings. Add the SMTP variables too if report email is required.
+5. Deploy, then check `/api/health`, registration/login, test submission, and admin access.
 
-## Default Administrator Account
-- **Email**: `admin@huq.org`
-- **Password**: `Admin@123`
-*(Configurable via `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`)*
+The nested API entry point in `api/[...path].js` routes Express API paths on Vercel. Configure the Vercel environment values independently; local `.env` values are not uploaded during deployment.

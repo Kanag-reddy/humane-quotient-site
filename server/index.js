@@ -12,7 +12,7 @@ app.use(express.static(DIST_DIR));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 app.use(express.static(PUBLIC_DIR, { maxAge: '1d' }));
 
-app.get('*', (req, res, next) => {
+app.get('/{*path}', (req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ ok: false, error: 'Endpoint not found.' });
   }
@@ -30,6 +30,5 @@ app.listen(PORT, () => {
   console.log(`\n======================================================`);
   console.log(`  Humane Quotient (HuQ) Backend running on port ${PORT}`);
   console.log(`  API Base URL: http://localhost:${PORT}/api`);
-  console.log(`  Admin Email : ${process.env.ADMIN_EMAIL || 'admin@huq.org'}`);
   console.log(`======================================================\n`);
 });

@@ -1,113 +1,91 @@
 const mongoose = require('mongoose');
-const fallbackStore = require('./fallbackStore');
 const User = require('../models/User');
 const Submission = require('../models/Submission');
 
-let isMongoConnected = false;
+let connectionPromise = null;
 
 async function connectDB() {
-  if (mongoose.connection.readyState >= 1) {
-    isMongoConnected = true;
+  if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
+  if (connectionPromise) return connectionPromise;
 
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/huq';
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000
-    });
-    isMongoConnected = true;
-    console.log(`[MongoDB] Connected successfully to ${uri.replace(/:([^:@]{3,})@/, ':****@')}`);
-  } catch (err) {
-    isMongoConnected = false;
-    console.warn(`[MongoDB] Notice: Could not connect to MongoDB (${err.message}).`);
-    console.warn(`[MongoDB] Using persistent fallback store.`);
-    console.warn(`[MongoDB] Set MONGODB_URI in your environment settings to connect to your MongoDB cluster.`);
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error('MONGODB_URI must be configured before connecting to MongoDB.');
   }
+  if (process.env.VERCEL && /(?:localhost|127\.0\.0\.1)/i.test(uri)) {
+    throw new Error('MONGODB_URI must point to a reachable MongoDB deployment on Vercel.');
+  }
+  connectionPromise = mongoose.connect(uri, {
+    serverSelectionTimeoutMS: 5000
+  }).then((connection) => {
+    console.log(`[MongoDB] Connected successfully to database "${connection.connection.name}".`);
+    return connection;
+  }).catch((err) => {
+    console.error(`[MongoDB] Connection failed (${err.name}): ${err.message}`);
+    throw err;
+  }).finally(() => {
+    connectionPromise = null;
+  });
+
+  return connectionPromise;
 }
 
 // Unified Data Access Layer (DAL)
 const db = {
-  isConnected: () => isMongoConnected,
+  isConnected: () => mongoose.connection.readyState === 1,
 
   async findUserByEmail(email) {
-    if (isMongoConnected) {
-      return await User.findOne({ email: String(email).toLowerCase() });
-    }
-    return await fallbackStore.findUserByEmail(email);
+    await connectDB();
+    return User.findOne({ email: String(email).toLowerCase() });
   },
 
   async findUserById(id) {
-    if (isMongoConnected) {
-      return await User.findById(id).select('-password');
-    }
-    const u = await fallbackStore.findUserById(id);
-    if (u) {
-      const { password, ...safe } = u;
-      return safe;
-    }
-    return null;
+    await connectDB();
+    return User.findById(id).select('-password');
   },
 
   async createUser(userData) {
-    if (isMongoConnected) {
-      const user = new User(userData);
-      return await user.save();
-    }
-    return await fallbackStore.createUser(userData);
+    await connectDB();
+    const user = new User(userData);
+    return user.save();
   },
 
   async createSubmission(subData) {
-    if (isMongoConnected) {
-      const submission = new Submission(subData);
-      return await submission.save();
-    }
-    return await fallbackStore.createSubmission(subData);
+    await connectDB();
+    const submission = new Submission(subData);
+    return submission.save();
   },
 
   async findSubmissionById(submissionId) {
-    if (isMongoConnected) {
-      return await Submission.findOne({ submissionId });
-    }
-    return await fallbackStore.findSubmissionById(submissionId);
+    await connectDB();
+    return Submission.findOne({ submissionId });
   },
 
   async getSubmissionsByEmail(email) {
-    if (isMongoConnected) {
-      return await Submission.find({ email: String(email).toLowerCase() }).sort({ createdAt: -1 });
-    }
-    const list = await fallbackStore.getSubmissionsByEmail(email);
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    await connectDB();
+    return Submission.find({ email: String(email).toLowerCase() }).sort({ createdAt: -1 });
   },
 
   async getSubmissionsByUserId(userId) {
-    if (isMongoConnected) {
-      return await Submission.find({ userId }).sort({ createdAt: -1 });
-    }
-    const list = await fallbackStore.getSubmissionsByUserId(userId);
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    await connectDB();
+    return Submission.find({ userId }).sort({ createdAt: -1 });
   },
 
   async getAllSubmissions() {
-    if (isMongoConnected) {
-      return await Submission.find().sort({ createdAt: -1 });
-    }
-    const list = await fallbackStore.getAllSubmissions();
-    return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    await connectDB();
+    return Submission.find().sort({ createdAt: -1 });
   },
 
   async countSubmissions() {
-    if (isMongoConnected) {
-      return await Submission.countDocuments();
-    }
-    return await fallbackStore.countSubmissions();
+    await connectDB();
+    return Submission.countDocuments();
   },
 
   async countUsers() {
-    if (isMongoConnected) {
-      return await User.countDocuments();
-    }
-    return await fallbackStore.countUsers();
+    await connectDB();
+    return User.countDocuments();
   }
 };
 

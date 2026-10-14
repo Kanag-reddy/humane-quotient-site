@@ -5,28 +5,6 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../config/db');
 const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 
-// Seed default admin user on first load
-async function ensureAdminUser() {
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@huq.org').toLowerCase().trim();
-  const adminPass = process.env.ADMIN_PASSWORD || 'Admin@123';
-  try {
-    const existing = await db.findUserByEmail(adminEmail);
-    if (!existing) {
-      const hash = await bcrypt.hash(adminPass, 10);
-      await db.createUser({
-        name: 'HuQ Administrator',
-        email: adminEmail,
-        password: hash,
-        role: 'admin'
-      });
-      console.log(`[Admin] Default admin created: ${adminEmail} (password: ${adminPass})`);
-    }
-  } catch (err) {
-    console.error('Error ensuring admin user:', err.message);
-  }
-}
-setTimeout(ensureAdminUser, 1000);
-
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {

@@ -308,6 +308,8 @@ export function HomeView({ onStartTest, onOpenAbout }) {
                     key={h.idx}
                     type="button"
                     className={`hs ${selectedIdx === h.idx ? 'on' : ''}`}
+                    onMouseEnter={() => setSelectedIdx(h.idx)}
+                    onFocus={() => setSelectedIdx(h.idx)}
                     onClick={() => setSelectedIdx(h.idx)}
                     aria-label={h.label}
                     aria-pressed={selectedIdx === h.idx}
@@ -336,6 +338,8 @@ export function HomeView({ onStartTest, onOpenAbout }) {
                     key={x.key}
                     type="button"
                     className={k === selectedIdx ? 'on' : ''}
+                    onMouseEnter={() => setSelectedIdx(k)}
+                    onFocus={() => setSelectedIdx(k)}
                     onClick={() => setSelectedIdx(k)}
                     aria-label={x.name}
                     aria-pressed={k === selectedIdx}
