@@ -6,18 +6,23 @@ const Submission = require('../models/Submission');
 let isMongoConnected = false;
 
 async function connectDB() {
+  if (mongoose.connection.readyState >= 1) {
+    isMongoConnected = true;
+    return mongoose.connection;
+  }
+
   const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/huq';
   try {
     await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3000
+      serverSelectionTimeoutMS: 5000
     });
     isMongoConnected = true;
-    console.log(`[MongoDB] Connected successfully to ${uri}`);
+    console.log(`[MongoDB] Connected successfully to ${uri.replace(/:([^:@]{3,})@/, ':****@')}`);
   } catch (err) {
     isMongoConnected = false;
     console.warn(`[MongoDB] Notice: Could not connect to MongoDB (${err.message}).`);
-    console.warn(`[MongoDB] Using local persistent JSON fallback store at data/local_db.json.`);
-    console.warn(`[MongoDB] Provide a valid MONGODB_URI in .env to connect to your MongoDB cluster.`);
+    console.warn(`[MongoDB] Using persistent fallback store.`);
+    console.warn(`[MongoDB] Set MONGODB_URI in your environment settings to connect to your MongoDB cluster.`);
   }
 }
 
