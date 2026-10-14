@@ -56,7 +56,7 @@ function AppContent() {
     const timer = setTimeout(() => {
       setDisplayRoute(currentRoute);
       setTransitionState('enter');
-    }, 180);
+    }, 200);
     return () => clearTimeout(timer);
   }, [currentRoute, displayRoute]);
 

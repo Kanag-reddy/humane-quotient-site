@@ -29,9 +29,9 @@ export function totalLevel(t) {
 }
 
 export const huqAssessment = [
-  'Self-Care is the priority. You care mainly about the individual, with little regard for others.',
-  'Socio-Care is the priority. You care for your family, friends and community with kindness and loyalty.',
-  'Universal Care is the priority. You care for all people with compassion, kindness and empathy.'
+  'Your responses place Self-Care as the current priority: care is more centered on your own needs in this snapshot. Consider this a starting point, not a judgment; growth can include widening your circle of care.',
+  'Your responses place Socio-Care as the current priority: care extends strongly to people in your family, friendships, and community. A next area to explore is how those habits can reach beyond familiar circles.',
+  'Your responses place Universal Care as the current priority: your answers reflect a broad circle of concern across people and contexts. Continue translating that intention into consistent everyday action.'
 ];
 
 export const values = [

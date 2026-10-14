@@ -5,8 +5,38 @@ import { useAuth } from '../context/AuthContext';
 import { values, levels, VALUE_MIN, VALUE_MAX, TOTAL_MIN, TOTAL_MAX, huqAssessment } from '../data/huqData';
 import { FlowerSVG } from '../components/FlowerSVG';
 import { BudSVG } from '../components/BudSVG';
+import { PetalsBackground } from '../components/PetalsBackground';
 import { ShareModal } from '../components/ShareModal';
 import { ValueIcon, DownloadIcon, MailIcon } from '../components/Icons';
+
+const responseLabels = ['Almost Never', 'Rarely', 'Sometimes', 'Often', 'Almost Always'];
+
+function describeResponseAverage(total, questionCount) {
+  const average = total / questionCount;
+  const lowerMark = Math.floor(average);
+  const upperMark = Math.ceil(average);
+  const interpretation = lowerMark === upperMark
+    ? `closest to “${responseLabels[lowerMark - 1]}”`
+    : `between “${responseLabels[lowerMark - 1]}” and “${responseLabels[upperMark - 1]}”`;
+
+  return `${average.toFixed(1)} out of 5, ${interpretation}`;
+}
+
+function describeScoreBand(score) {
+  if (score <= 20) return 'Your answers leaned toward the lower end of the response scale.';
+  if (score <= 28) return 'Your answers leaned toward the lower part of the response scale.';
+  if (score <= 36) return 'Your answers clustered around the middle of the response scale.';
+  if (score <= 44) return 'Your answers leaned above the middle of the response scale.';
+  if (score <= 52) return 'Your answers leaned toward the upper part of the response scale.';
+  return 'Your answers consistently leaned toward the upper end of the response scale.';
+}
+
+function describeAspectBand(score) {
+  if (score <= 5) return 'answers leaned toward the lower end of the frequency scale';
+  if (score <= 8) return 'answers were between Rarely and Sometimes on average';
+  if (score <= 11) return 'answers were between Sometimes and Often on average';
+  return 'answers leaned toward the upper end of the frequency scale';
+}
 
 export function ProfileView({ onGoPlan, onRetake }) {
   const { result, demographics } = useTest();
@@ -24,6 +54,16 @@ export function ProfileView({ onGoPlan, onRetake }) {
       animationTimersRef.current.forEach(clearTimeout);
       animationTimersRef.current = [];
     };
+  }, []);
+
+  useEffect(() => {
+    const revealReportForPrint = () => {
+      setBudOpen(true);
+      setBloomActive(false);
+      setRevealed(true);
+    };
+    window.addEventListener('beforeprint', revealReportForPrint);
+    return () => window.removeEventListener('beforeprint', revealReportForPrint);
   }, []);
 
   const clearAnimationTimers = () => {
@@ -87,19 +127,28 @@ export function ProfileView({ onGoPlan, onRetake }) {
   const strongestKeys = result.strongest || [];
   const topValues = strongestKeys.map((k) => values.find((v) => v.key === k)).filter(Boolean);
   const primaryTop = topValues[0] || values[0];
-  const sortedValues = [...result.values].sort((a, b) => b.score - a.score);
+  const scoredValues = result.values
+    .map((score) => ({ ...score, definition: values.find((value) => value.key === score.key) }))
+    .filter((score) => score.definition);
+  const sortedValues = [...scoredValues].sort((a, b) => b.score - a.score);
+  const lowestScore = Math.min(...scoredValues.map((value) => value.score));
+  const highestScore = Math.max(...scoredValues.map((value) => value.score));
+  const growthValues = scoredValues.filter((value) => value.score === lowestScore);
+  const levelCounts = levels.map((level, index) => ({
+    ...level,
+    count: scoredValues.filter((value) => value.level === index).length
+  }));
+  const currentLevelCount = levelCounts[result.level]?.count || 0;
+  const formatValueNames = (items) => items.map((item) => item.definition.name).join(', ');
 
   const totalPct = Math.max(0, Math.min(100, ((result.total - TOTAL_MIN) / (TOTAL_MAX - TOTAL_MIN)) * 100));
 
   const displayName = demographics.name || (user && user.name) || 'Your';
 
   return (
-    <>
+    <div className="profile-report-page">
       <section className="prof-hero">
-        <picture className="hero-bg" aria-hidden="true">
-          <source media="(min-width:768px)" srcSet="/img/hero-red-desktop.webp" width="1920" height="1300" />
-          <img src="/img/hero-red-mobile.webp" width="1000" height="1300" alt="" />
-        </picture>
+        <PetalsBackground />
 
         <div className="wrap">
           <span className="eyebrow">Your Humane Quotient Profile</span>
@@ -116,7 +165,9 @@ export function ProfileView({ onGoPlan, onRetake }) {
                 <span>/ 10</span>
               </div>
               <br />
-              <span className="lvl">{currentLevel.name} is your priority</span>
+              <span className="lvl" style={{ background: currentLevel.color, color: currentLevel.ink }}>
+                {currentLevel.name} is your priority
+              </span>
               <p className="d">{huqAssessment[result.level]}</p>
             </div>
           )}
@@ -132,20 +183,17 @@ export function ProfileView({ onGoPlan, onRetake }) {
                 {!revealed ? (
                   <>
                     <BudSVG isOpen={budOpen} />
-                    <span className="reveal-cta">
-                      Click / Tap to reveal your profile
-                    </span>
-                    <button
-                      className="reveal-hit"
-                      type="button"
-                      aria-label="Click to reveal your profile"
-                      onClick={handleReveal}
-                    />
                   </>
                 ) : (
                   <FlowerSVG result={result} onReplay={handleReplayBloom} isBlooming={bloomActive} />
                 )}
               </div>
+
+              {!revealed && (
+                <button className="reveal-cta" type="button" onClick={handleReveal}>
+                  Click / Tap to reveal your profile
+                </button>
+              )}
 
               {revealed && (
                 <div className="legend">
@@ -224,6 +272,55 @@ export function ProfileView({ onGoPlan, onRetake }) {
       {revealed && (
         <section style={{ paddingTop: '36px' }}>
           <div className="wrap">
+            <div className="personal-report" aria-labelledby="personal-report-heading">
+              <span className="eyebrow">Your HuQ report</span>
+              <h2 id="personal-report-heading">A closer look at your results</h2>
+              <p className="personal-report-intro">
+                This report reflects your answers in this assessment. It is a snapshot for self-reflection—not a fixed personality type, diagnosis, or judgment.
+              </p>
+              <div className="report-grid">
+                <article className="report-card">
+                  <span className="report-label">Your overall picture</span>
+                  <h3>{currentLevel.name}</h3>
+                  <p>
+                    Your HuQ is {(Math.round(result.huq * 10) / 10).toFixed(1)}/10 ({result.total}/480). {currentLevelCount} of your eight value scores {currentLevelCount === 1 ? 'is' : 'are'} in this care band.
+                  </p>
+                  <p>
+                    Across the eight values, your scores range from {lowestScore} to {highestScore} out of 60.
+                  </p>
+                </article>
+
+                <article className="report-card">
+                  <span className="report-label">Your strongest pattern</span>
+                  <h3>{topValues.map((value) => value.name).join(' & ')}</h3>
+                  <p>
+                    {topValues.length > 1 ? 'These values are tied for your highest score. ' : ''}
+                    {primaryTop.leverage} The related value reports below show the reflection areas that contributed to each score.
+                  </p>
+                </article>
+
+                <article className="report-card">
+                  <span className="report-label">A place to grow</span>
+                  <h3>{formatValueNames(growthValues)}</h3>
+                  <p>
+                    {growthValues.length > 1 ? 'These values are tied for your lowest score. ' : ''}
+                    This is a useful place to begin exploring small, practical changes. A lower score is not a flaw; it points to an area your answers rated differently in this snapshot.
+                  </p>
+                </article>
+
+                <article className="report-card">
+                  <span className="report-label">Your eight-value spread</span>
+                  <h3>{highestScore - lowestScore} point{highestScore - lowestScore === 1 ? '' : 's'} between highest and lowest</h3>
+                  <p>
+                    Highest: {formatValueNames(scoredValues.filter((value) => value.score === highestScore))}. Lowest: {formatValueNames(growthValues)}. Compare each value’s four reflection areas below to see where those scores came from.
+                  </p>
+                </article>
+              </div>
+              <p className="report-level-summary">
+                Across your eight quotients: {levelCounts.filter((level) => level.count > 0).map((level) => `${level.count} ${level.name}`).join(' · ')}.
+              </p>
+            </div>
+
             {/* Journey Spectrum */}
             <div className="big-card">
               <h2>Your journey from Self-Care to Universal Care</h2>
@@ -254,17 +351,29 @@ export function ProfileView({ onGoPlan, onRetake }) {
             </div>
 
             <div className="vgrid">
-              {result.values.map((v, i) => {
-                const def = values[i];
+              {sortedValues.map((v) => {
+                const def = v.definition;
                 const isTop = strongestKeys.includes(v.key);
                 const l = levels[v.level];
                 const cardPct = Math.max(0, Math.min(100, ((v.score - VALUE_MIN) / (VALUE_MAX - VALUE_MIN)) * 100));
+                const aspectScores = def.aspects.map((aspect, index) => ({
+                  name: aspect.name,
+                  score: v.aspects?.[index] || 0
+                }));
+                const highestAspect = Math.max(...aspectScores.map((aspect) => aspect.score));
+                const lowestAspect = Math.min(...aspectScores.map((aspect) => aspect.score));
+                const leadingAspects = aspectScores.filter((aspect) => aspect.score === highestAspect);
+                const exploringAspects = aspectScores.filter((aspect) => aspect.score === lowestAspect);
 
                 return (
-                  <article key={v.key} className={`vcard ${isTop ? 'top' : ''}`}>
+                  <article
+                    key={v.key}
+                    className={`vcard ${isTop ? 'top' : ''}`}
+                    style={{ '--level-accent': isTop ? 'var(--gold)' : l.color }}
+                  >
                     {isTop && <span className="badge">★ Strongest</span>}
                     <header>
-                      <div className="ic">
+                      <div className="ic" style={{ background: l.color, color: l.ink }}>
                         <ValueIcon name={v.key} size={24} />
                       </div>
                       <h3>
@@ -297,17 +406,54 @@ export function ProfileView({ onGoPlan, onRetake }) {
 
                     <p className="as">{def.assess[v.level]}</p>
 
+                    <div className="score-narrative">
+                      <h4>What this score means</h4>
+                      <p>
+                        {describeScoreBand(v.score)} Across 12 {def.name.toLowerCase()} statements, your average response was {describeResponseAverage(v.score, 12)}. HuQ describes this score band as {l.name}; this is a summary of your answers, not a comparison with other people.
+                      </p>
+                      <p>
+                        <b>{def.name} through {def.facet.toLowerCase()}:</b> {def.facetText}
+                      </p>
+                      <p>
+                        <b>At this care level:</b> {def.assess[v.level]}
+                      </p>
+                    </div>
+
+                    <div className="aspect-insight">
+                      {highestAspect === lowestAspect ? (
+                        <p>
+                          <b>Your reflection areas are even:</b> all four are rated {highestAspect}/15 in this value.
+                        </p>
+                      ) : (
+                        <>
+                          <p>
+                            <b>Most present in your answers:</b> {leadingAspects.map((aspect) => aspect.name).join(', ')} ({highestAspect}/15).
+                          </p>
+                          <p>
+                            <b>Worth exploring:</b> {exploringAspects.map((aspect) => aspect.name).join(', ')} ({lowestAspect}/15).
+                          </p>
+                        </>
+                      )}
+                    </div>
+
                     <div className="mini">
-                      {v.aspects.map((a, k) => (
+                      {aspectScores.map((aspect, k) => (
                         <div key={k}>
-                          <span>{def.aspects[k].name}</span>
+                          <span>{aspect.name}</span>
                           <span className="t">
-                            <i style={{ width: `${(a / 15) * 100}%` }} />
+                            <i style={{ width: `${(aspect.score / 15) * 100}%` }} />
                           </span>
-                          <em>{a}/15</em>
+                          <em>{aspect.score}/15</em>
                         </div>
                       ))}
                     </div>
+                    <ul className="aspect-explanations">
+                      {aspectScores.map((aspect) => (
+                        <li key={aspect.name}>
+                          <b>{aspect.name}:</b> {aspect.score}/15 across three statements; average response {describeResponseAverage(aspect.score, 3)}. {describeAspectBand(aspect.score)}.
+                        </li>
+                      ))}
+                    </ul>
                   </article>
                 );
               })}
@@ -398,6 +544,9 @@ export function ProfileView({ onGoPlan, onRetake }) {
                 Retake the test
               </button>
             </div>
+            <p className="print-report-note">
+              This report describes your responses at the time you completed the HuQ assessment. It is intended for personal reflection and is not a clinical diagnosis or a fixed label.
+            </p>
           </div>
         </section>
       )}
@@ -409,6 +558,6 @@ export function ProfileView({ onGoPlan, onRetake }) {
         result={result}
         userName={displayName}
       />
-    </>
+    </div>
   );
 }

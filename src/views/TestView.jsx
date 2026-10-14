@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { values, questions, options, profileOptions, totalQuestions } from '../data/huqData';
 import { ValueIcon } from '../components/Icons';
 
+const loaderPetalColors = ['var(--gold)', 'var(--amber)', 'var(--crimson)', 'var(--rust)'];
+
 const QuestionCard = memo(function QuestionCard({ question, valueKey, answer, index, onSelect }) {
   return (
     <div
@@ -175,7 +177,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
         const el = document.getElementById(`q-card-${nextUnanswered}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 300);
+    }, 400);
   }, [setAnswer]);
 
   const handleNextStep = async () => {
@@ -212,7 +214,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
   // Phase: SAVING / SUBMITTING
   if (phase === 'saving') {
     return (
-      <div className="test" style={{ padding: '60px 20px', minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+      <div className="test saving-screen" style={{ padding: '60px 20px', minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
         {savingErr ? (
           <div className="saving">
             <div className="state-logo">
@@ -247,9 +249,15 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
             </div>
             <h2>Preparing your Humane Quotient Profile…</h2>
             <p>Bringing your eight quotients together.</p>
-            <div className="waves" aria-hidden="true">
-              {Array.from({ length: 12 }, (_, i) => (
-                <i key={i} style={{ animationDelay: `${(i * 0.1).toFixed(1)}s` }} />
+            <div className="flower-loader" aria-hidden="true">
+              {Array.from({ length: 8 }, (_, i) => (
+                <i
+                  key={i}
+                  style={{
+                    '--petal-color': loaderPetalColors[i % loaderPetalColors.length],
+                    '--petal-rotation': `${i * 45}deg`
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -317,7 +325,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
                 <div>
                   <span style={{ fontWeight: 600, color: 'var(--crimson)' }}>Taking the test as a Guest</span>
                   <div style={{ fontSize: '0.9rem', color: 'var(--maroon)' }}>
-                    You can finish the test and get results freely without an account. Want to save your history?
+                    You can complete the test and view your results without an account. Sign in to save your history.
                   </div>
                 </div>
                 <button

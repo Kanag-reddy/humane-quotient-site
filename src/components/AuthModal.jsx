@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShieldIcon, UserIcon } from './Icons';
+import { UserIcon } from './Icons';
 import { useDialogAccessibility } from '../hooks/useDialogAccessibility';
 
 export function AuthModal() {
@@ -12,7 +12,7 @@ export function AuthModal() {
 
   if (!authModal.isOpen) return null;
 
-  const mode = authModal.mode; // 'login', 'register', 'admin'
+  const mode = authModal.mode;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,25 +33,19 @@ export function AuthModal() {
         });
         if (!res.ok) setError(res.error);
       } else {
-        // login or admin
         const res = await login({
           email: formData.email,
           password: formData.password
         });
-        if (!res.ok) setError(res.error);
+        if (!res.ok) {
+          setError(res.error);
+        } else if (res.user?.role === 'admin') {
+          window.location.hash = '#/admin';
+        }
       }
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const fillAdminCredentials = () => {
-    setFormData({
-      name: '',
-      email: 'admin@huq.org',
-      password: 'Admin@123'
-    });
-    setError('');
   };
 
   return (
@@ -65,13 +59,11 @@ export function AuthModal() {
           <img src="/img/huq-mark.webp" width="48" height="48" alt="HuQ" style={{ display: 'block', margin: '0 auto 12px' }} />
           <h2>
             {mode === 'register' && 'Create Your Account'}
-            {mode === 'login' && 'Welcome Back'}
-            {mode === 'admin' && 'Administrator Login'}
+            {mode !== 'register' && 'Welcome Back'}
           </h2>
           <p className="modal-sub">
             {mode === 'register' && 'Track your humane quotient growth across sessions.'}
-            {mode === 'login' && 'Sign in to access your saved profile and test history.'}
-            {mode === 'admin' && 'Access administrative analytics and user submission search.'}
+            {mode !== 'register' && 'Sign in to access your saved profile and test history.'}
           </p>
         </div>
 
@@ -89,13 +81,6 @@ export function AuthModal() {
             onClick={() => { setAuthModalMode('register'); setError(''); }}
           >
             Register
-          </button>
-          <button
-            type="button"
-            className={`modal-tab ${mode === 'admin' ? 'active' : ''}`}
-            onClick={() => { setAuthModalMode('admin'); setError(''); }}
-          >
-            <ShieldIcon size={16} /> Admin
           </button>
         </div>
 
@@ -145,26 +130,13 @@ export function AuthModal() {
             />
           </div>
 
-          {mode === 'admin' && (
-            <div style={{ textAlign: 'right', marginBottom: '8px' }}>
-              <button
-                type="button"
-                className="btn-link"
-                onClick={fillAdminCredentials}
-                style={{ fontSize: '0.85rem', color: 'var(--amber)' }}
-              >
-                Auto-fill default admin credentials
-              </button>
-            </div>
-          )}
-
           <button className="btn primary" type="submit" disabled={submitting} style={{ width: '100%', marginTop: '12px' }}>
-            {submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : mode === 'admin' ? 'Access Admin Console' : 'Sign In'}
+            {submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
         <div className="modal-foot">
-          {mode === 'login' && (
+          {mode !== 'register' && (
             <p>
               Don't have an account?{' '}
               <button type="button" className="btn-link" onClick={() => setAuthModalMode('register')}>
@@ -177,14 +149,6 @@ export function AuthModal() {
               Already have an account?{' '}
               <button type="button" className="btn-link" onClick={() => setAuthModalMode('login')}>
                 Sign in here
-              </button>
-            </p>
-          )}
-          {mode === 'admin' && (
-            <p>
-              Standard participant?{' '}
-              <button type="button" className="btn-link" onClick={() => setAuthModalMode('login')}>
-                Back to User Login
               </button>
             </p>
           )}

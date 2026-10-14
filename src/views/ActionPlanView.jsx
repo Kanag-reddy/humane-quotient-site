@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useTest } from '../context/TestContext';
 import { values, levels } from '../data/huqData';
-import { ValueIcon, DownloadIcon } from '../components/Icons';
+import { DownloadIcon } from '../components/Icons';
+import { PetalsBackground } from '../components/PetalsBackground';
 
 export function ActionPlanView({ onBackProfile, onRetake }) {
   const { result } = useTest();
@@ -86,10 +87,7 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
   return (
     <>
       <section className="plan-hero">
-        <picture className="hero-bg" aria-hidden="true">
-          <source media="(min-width:768px)" srcSet="/img/hero-red-desktop.webp" width="1920" height="1300" />
-          <img src="/img/hero-red-mobile.webp" width="1000" height="1300" alt="" />
-        </picture>
+        <PetalsBackground />
         <div className="wrap">
           <span className="eyebrow">Action plan</span>
           <h1>Grow your Humane Quotient</h1>
@@ -129,9 +127,13 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
               const isFocus = n < 2;
 
               return (
-                <div key={it.targetVal.key} className={`tip ${isFocus ? 'focus' : ''}`}>
+                <div
+                  key={it.targetVal.key}
+                  className={`tip ${isFocus ? 'focus' : ''}`}
+                  style={{ '--level-accent': l.color }}
+                >
                   <div className="ic">
-                    <ValueIcon name={it.targetVal.key} size={26} color="var(--crimson)" />
+                    <span aria-hidden="true">{n + 1}</span>
                   </div>
                   <div>
                     <h4>
@@ -163,7 +165,11 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
             {ladderStages.map((s) => {
               const isCur = s.levelIdx === result.level;
               return (
-                <div key={s.levelIdx} className={`card ${isCur ? 'cur' : ''}`}>
+                <div
+                  key={s.levelIdx}
+                  className={`card ${isCur ? 'cur' : ''}`}
+                  style={{ '--level-accent': levels[s.levelIdx].color }}
+                >
                   {isCur && <span className="you">You are here</span>}
                   <h3>{s.title}</h3>
                   <ul>

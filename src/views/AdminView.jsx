@@ -100,8 +100,8 @@ export function AdminView() {
               You must sign in with an administrator account to view the dashboard and query user submissions.
             </p>
             <div className="state-actions">
-              <button className="btn primary" onClick={() => openAuthModal('admin')}>
-                Sign In as Administrator
+              <button className="btn primary" onClick={() => openAuthModal('login')}>
+                Sign In
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 
 export function StreamSVG() {
-  const stops = ['#E0AC27', '#C97F1C', '#A8450F', '#850500'];
+  const stops = ['#E0AC27', '#A8450F', '#850500'];
   let up = '';
   let dn = '';
 
@@ -37,6 +37,8 @@ export function StreamSVG() {
         <span>Universal Care</span>
       </div>
       <svg
+        className="parallax"
+        data-parallax
         viewBox="0 64 1100 130"
         role="img"
         aria-label="A stream widening into a river and then an ocean: care growing from Self-Care to Socio-Care to Universal Care"
@@ -44,7 +46,7 @@ export function StreamSVG() {
         <defs>
           <linearGradient id="stg" x1="0" x2="1">
             {stops.map((s, i) => (
-              <stop key={i} offset={`${i * 33.3}%`} stopColor={s} />
+              <stop key={i} offset={`${i * 50}%`} stopColor={s} />
             ))}
           </linearGradient>
         </defs>

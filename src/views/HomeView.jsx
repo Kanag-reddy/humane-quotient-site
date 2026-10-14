@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { values } from '../data/huqData';
 import { StreamSVG } from '../components/StreamSVG';
 import { PetalsBackground } from '../components/PetalsBackground';
@@ -8,6 +8,64 @@ export function HomeView({ onStartTest, onOpenAbout }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
   const selectedValue = values[selectedIdx];
+
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll('[data-reveal]'));
+    const root = document.documentElement;
+
+    if (!('IntersectionObserver' in window)) {
+      elements.forEach((element) => element.classList.add('is-visible'));
+      return undefined;
+    }
+
+    root.classList.add('reveal-ready');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    elements.forEach((element) => observer.observe(element));
+    return () => {
+      observer.disconnect();
+      root.classList.remove('reveal-ready');
+      elements.forEach((element) => element.classList.remove('is-visible'));
+    };
+  }, []);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) return undefined;
+
+    const elements = Array.from(document.querySelectorAll('[data-parallax]'));
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      elements.forEach((element) => {
+        const bounds = element.getBoundingClientRect();
+        const distance = (window.innerHeight / 2) - (bounds.top + bounds.height / 2);
+        const offset = Math.max(-40, Math.min(40, distance * 0.3));
+        element.style.setProperty('--parallax-y', `${offset.toFixed(1)}px`);
+      });
+    };
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    scheduleUpdate();
+
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
+      elements.forEach((element) => element.style.removeProperty('--parallax-y'));
+    };
+  }, []);
 
   const hotspots = [
     { idx: 0, label: 'Selflessness', left: '50.0%', top: '15.5%' },
@@ -23,10 +81,6 @@ export function HomeView({ onStartTest, onOpenAbout }) {
   return (
     <>
       <section className="hero">
-        <picture className="hero-bg" aria-hidden="true">
-          <source media="(min-width:768px)" srcSet="/img/hero-red-desktop.webp" width="1920" height="1300" />
-          <img src="/img/hero-red-mobile.webp" width="1000" height="1300" alt="" fetchpriority="high" />
-        </picture>
         <PetalsBackground />
 
         <a
@@ -76,8 +130,10 @@ export function HomeView({ onStartTest, onOpenAbout }) {
             </div>
           </div>
 
-          <div className="hero-art">
+          <div className="hero-art" data-reveal>
             <img
+              className="parallax"
+              data-parallax
               src="/img/huq-flower-520.webp"
               srcSet="/img/huq-flower-520.webp 520w, /img/huq-flower-760.webp 760w, /img/huq-flower.webp 1000w"
               sizes="(max-width:639px) 78vw, (max-width:1023px) 56vw, 503px"
@@ -92,7 +148,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
 
       <section id="about">
         <div className="wrap two">
-          <div>
+          <div data-reveal style={{ '--reveal-delay': '0ms' }}>
             <span className="eyebrow">Introduction</span>
             <h2>Our humaneness can be measured, nurtured and grown.</h2>
             <p className="lead">
@@ -107,7 +163,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card" data-reveal style={{ '--reveal-delay': '80ms' }}>
             <h3 className="serif" style={{ fontSize: '1.7rem', fontWeight: 600 }}>
               “Humaneness” — a definition
             </h3>
@@ -123,7 +179,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
 
       <section id="care">
         <div className="wrap">
-          <div style={{ maxWidth: '760px' }}>
+          <div data-reveal style={{ maxWidth: '760px', '--reveal-delay': '0ms' }}>
             <span className="eyebrow">The core idea</span>
             <h2>The Evolution of Care</h2>
             <p className="lead">
@@ -131,23 +187,23 @@ export function HomeView({ onStartTest, onOpenAbout }) {
             </p>
           </div>
 
-          <div className="stream">
+          <div className="stream" data-reveal style={{ '--reveal-delay': '80ms' }}>
             <StreamSVG />
           </div>
 
           <div className="care">
-            <div className="c c1">
-              <div className="big">Stream</div>
+            <div className="c c1" data-reveal style={{ '--reveal-delay': '0ms' }}>
+              <div className="big">I</div>
               <h3>Self-Care</h3>
               <p>Care solely for the individual, with little or no regard for others.</p>
             </div>
-            <div className="c c2">
-              <div className="big">River</div>
+            <div className="c c2" data-reveal style={{ '--reveal-delay': '80ms' }}>
+              <div className="big">We</div>
               <h3>Socio-Care</h3>
               <p>Care for one’s family, friends and community with kindness and loyalty.</p>
             </div>
-            <div className="c c3">
-              <div className="big">Ocean</div>
+            <div className="c c3" data-reveal style={{ '--reveal-delay': '160ms' }}>
+              <div className="big">He</div>
               <h3>Universal Care</h3>
               <p>Care for all people with compassion, kindness and empathy.</p>
             </div>
@@ -157,7 +213,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
 
       <section id="values">
         <div className="wrap">
-          <div style={{ maxWidth: '760px' }}>
+          <div data-reveal style={{ maxWidth: '760px', '--reveal-delay': '0ms' }}>
             <span className="eyebrow">The HuQ model</span>
             <h2>Eight core humane values</h2>
             <p className="lead">
@@ -165,7 +221,7 @@ export function HomeView({ onStartTest, onOpenAbout }) {
             </p>
           </div>
 
-          <figure className="eqn" id="eqn">
+          <figure className="eqn" id="eqn" data-reveal style={{ '--reveal-delay': '80ms' }}>
             <div className="eqrow">
               <div className="eqc" role="group" aria-label="Human Essence">
                 <span className="eqt">Human Essence</span>
@@ -222,14 +278,21 @@ export function HomeView({ onStartTest, onOpenAbout }) {
         </div>
       </section>
 
+      <section className="owof" data-reveal aria-label="One World One Family">
+        <div className="wrap">
+          <span className="eyebrow">A shared ideal</span>
+          <p className="serif">“One World, One Family”</p>
+        </div>
+      </section>
+
       <section id="explore" aria-labelledby="explore-heading">
         <div className="wrap">
-          <div style={{ maxWidth: '760px' }}>
+          <div data-reveal style={{ maxWidth: '760px', '--reveal-delay': '0ms' }}>
             <span className="eyebrow">Explore</span>
             <h2 id="explore-heading">Explore the eight values</h2>
           </div>
 
-          <div className="vals">
+          <div className="vals" data-reveal style={{ '--reveal-delay': '80ms' }}>
             <div className="fl">
               <div className="fimg">
                 <img

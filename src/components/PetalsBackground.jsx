@@ -17,8 +17,8 @@ export function PetalsBackground() {
   const items = Array.from({ length: 9 }, (_, i) => {
     const left = 4 + ((i * 11.3) % 92);
     const size = 26 + ((i * 17) % 40);
-    const dur = 12 + ((i * 5) % 9);
-    const delay = -((i * 7) % 12);
+    const dur = 18 + ((i * 5) % 9);
+    const delay = -((i * 7) % 18);
     return (
       <svg
         key={i}
@@ -35,7 +35,7 @@ export function PetalsBackground() {
         <path
           d={petalPath(2, 54, 22)}
           fill={i % 3 ? '#FFFDE9' : '#E4D5CB'}
-          fillOpacity={i % 2 ? 0.07 : 0.1}
+          fillOpacity={i % 2 ? 0.04 : 0.08}
         />
       </svg>
     );

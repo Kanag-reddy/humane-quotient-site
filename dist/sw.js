@@ -1,5 +1,5 @@
 /* Offline cache for static assets. Responses are never cached: /api is always network-only. */
-const CACHE = 'huq-static-v6';
+const CACHE = 'huq-static-v7';
 const CORE = ['./', 'css/styles.css', 'js/huq-data.js', 'js/app.js', 'img/huq-flower.webp', 'img/huq-flower-520.webp', 'img/huq-flower-760.webp', 'img/huq-mark.webp', 'img/hero-red-mobile.webp', 'img/hero-red-desktop.webp',
   'fonts/jost-latin-wght-normal.woff2', 'fonts/cormorant-garamond-latin-600-normal.woff2', 'fonts/cormorant-garamond-latin-500-normal.woff2', 'fonts/cormorant-garamond-latin-500-italic.woff2'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting())); });
