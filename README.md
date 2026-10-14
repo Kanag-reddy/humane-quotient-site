@@ -95,4 +95,4 @@ This builds the React app into `dist/` and runs the Express server on port 5000,
 4. Add `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in Vercel's Production environment settings. Add the SMTP variables too if report email is required.
 5. Deploy, then check `/api/health`, registration/login, test submission, and admin access.
 
-The nested API entry point in `api/[...path].js` routes Express API paths on Vercel. Configure the Vercel environment values independently; local `.env` values are not uploaded during deployment.
+The `/api/*` Vercel rewrite sends requests to `api/index.js`, which restores the original path for Express before the SPA fallback is applied. Configure the Vercel environment values independently; local `.env` values are not uploaded during deployment.
