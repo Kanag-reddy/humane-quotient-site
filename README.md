@@ -66,7 +66,7 @@ ADMIN_PASSWORD=use-a-strong-unique-password
 # MAIL_FROM="Humane Quotient" <your-email@gmail.com>
 ```
 
-> **Important**: Configure `MONGODB_URI`, `JWT_SECRET` (at least 32 characters), `ADMIN_EMAIL`, and `ADMIN_PASSWORD` before starting the application. The app does not store accounts or submissions locally; API requests return HTTP 503 while MongoDB is unavailable. Run `npm run admin:configure` to create/update the configured admin. This command permanently deletes other admin accounts. Never commit `.env` or enter secrets in source code.
+> **Important**: Configure `MONGODB_URI` and `JWT_SECRET` (at least 32 characters) before starting the application. The app does not store accounts or submissions locally; API requests return HTTP 503 while MongoDB is unavailable. `ADMIN_EMAIL` and `ADMIN_PASSWORD` are only needed when manually running `npm run admin:configure`; they are not needed by the deployed app once the admin exists in MongoDB. That command permanently deletes other admin accounts. Never commit `.env` or enter secrets in source code.
 
 To copy the app's `users` and `submissions` collections from the database named in `MONGODB_URI` into a new `huq` database in the same Atlas cluster, run `npm run db:copy-to-huq` while the URI still points to the source database. The command refuses to overwrite a non-empty `huq` database and leaves the source unchanged. Then change the URI's database path to `/huq` in `.env` and Vercel. MongoDB creates collections (not relational tables); the app uses `users` and `submissions`.
 
@@ -92,7 +92,7 @@ This builds the React app into `dist/` and runs the Express server on port 5000,
 1. Push the project to GitHub and import its repository into Vercel.
 2. Set the project root to the directory containing `package.json`.
 3. Use the Vite preset, `npm run build` as the build command, and `dist` as the output directory.
-4. Add `MONGODB_URI`, `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in Vercel's Production environment settings. Add the SMTP variables too if report email is required.
+4. Add `MONGODB_URI` (with `/huq` as the database path) and `JWT_SECRET` in Vercel's Production environment settings. Add the SMTP variables too if report email is required. The admin account is stored in MongoDB; `ADMIN_EMAIL` and `ADMIN_PASSWORD` are not needed at runtime.
 5. Deploy, then check `/api/health`, registration/login, test submission, and admin access.
 
 The `/api/*` Vercel rewrite sends requests to `api/index.js`, which restores the original path for Express before the SPA fallback is applied. Configure the Vercel environment values independently; local `.env` values are not uploaded during deployment.

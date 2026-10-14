@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const { connectDB } = require('./config/db');
-const { ensureAdminUser } = require('./config/adminUser');
 
 const authRoutes = require('./routes/auth');
 const submissionRoutes = require('./routes/submissions');
@@ -27,11 +26,17 @@ app.use((req, res, next) => {
 app.use('/api', async (req, res, next) => {
   try {
     await connectDB();
-    await ensureAdminUser();
     next();
   } catch (err) {
-    console.error('API request rejected because database setup is unavailable:', err.message);
-    res.status(503).json({ ok: false, error: 'Database unavailable. Please try again later.' });
+    const missingUri = err.message === 'MONGODB_URI must be configured before connecting to MongoDB.';
+    console.error('API request rejected because MongoDB is unavailable:', err.message);
+    res.status(503).json({
+      ok: false,
+      code: missingUri ? 'DATABASE_CONFIGURATION_MISSING' : 'DATABASE_UNAVAILABLE',
+      error: missingUri
+        ? 'MongoDB is not configured. Set MONGODB_URI in the deployment environment.'
+        : 'MongoDB could not be reached. Check the deployment MONGODB_URI and database network access.'
+    });
   }
 });
 
