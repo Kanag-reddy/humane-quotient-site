@@ -117,7 +117,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
           Action Plan
         </a>
 
-        <div className="nav-language" ref={languageRef}>
+        <div className="nav-language" ref={languageRef} translate="no">
           <button
             type="button"
             className="nav-language-btn"
@@ -129,7 +129,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
               <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.2" />
               <path d="M3 16h26M16 3c4.2 3.7 6.4 8 6.4 13S20.2 25.3 16 29C11.8 25.3 9.6 21 9.6 16S11.8 6.7 16 3Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
             </svg>
-            <span>{LANGUAGES.find(([code]) => code === language)?.[1] || 'English'}</span>
+            <span id="navLanguageName">{LANGUAGES.find(([code]) => code === language)?.[1] || 'English'}</span>
             <svg className="nav-language-chevron" aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="none">
               <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -147,6 +147,12 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
                     setLanguageState(code);
                     setLanguage(code);
                     setLanguageOpen(false);
+                    const label = document.getElementById('navLanguageName');
+                    if (label) label.textContent = name;
+                    requestAnimationFrame(() => {
+                      const latestLabel = document.getElementById('navLanguageName');
+                      if (latestLabel) latestLabel.textContent = name;
+                    });
                   }}
                 >
                   <span>{name}</span>

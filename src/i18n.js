@@ -39,6 +39,8 @@ export function useLanguage() {
     const attrs = ['aria-label', 'title', 'placeholder'];
 
     const translateNode = (node) => {
+      if (node.nodeType === Node.ELEMENT_NODE && node.closest('[translate="no"]')) return;
+      if (node.nodeType === Node.TEXT_NODE && node.parentElement?.closest('[translate="no"]')) return;
       if (node.nodeType === Node.TEXT_NODE) {
         const original = records.get(node) || node.nodeValue;
         if (!records.has(node)) records.set(node, original);
@@ -79,6 +81,11 @@ export async function setLanguage(code) {
   currentLanguage = next;
   dictionary = null;
   sessionStorage.setItem('huq_language', next);
+  document.documentElement.lang = next;
+  document.documentElement.dataset.script = {
+    hi: 'deva', te: 'telu', ta: 'taml', kn: 'knda', ml: 'mlym', bn: 'beng'
+  }[next] || 'latin';
+  window.dispatchEvent(new CustomEvent('huq-language-change', { detail: { code: next } }));
   if (next !== 'en') {
     try {
       const response = await fetch(`/i18n/${next}.json`);
@@ -87,10 +94,6 @@ export async function setLanguage(code) {
       console.warn(`Could not load ${next} translations.`, error);
     }
   }
-  document.documentElement.lang = next;
-  document.documentElement.dataset.script = {
-    hi: 'deva', te: 'telu', ta: 'taml', kn: 'knda', ml: 'mlym', bn: 'beng'
-  }[next] || 'latin';
   window.dispatchEvent(new CustomEvent('huq-language-change', { detail: { code: next } }));
 }
 
