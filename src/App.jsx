@@ -93,8 +93,8 @@ function AppContent() {
     return () => window.clearTimeout(timerId);
   }, [result]);
 
-  const navigateTo = (route) => {
-    if (!result && (route === 'profile' || route === 'plan')) route = 'test';
+  const navigateTo = (route, forceProfile = false) => {
+    if (!forceProfile && !result && (route === 'profile' || route === 'plan')) route = 'test';
     if (route === 'test') {
       const nextPhase = result || phase === 'saving' ? 'intro' : phase;
       const currentState = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
@@ -137,7 +137,7 @@ function AppContent() {
 
         {displayRoute === 'test' && (
           <TestView
-            onFinishTest={() => navigateTo('profile')}
+            onFinishTest={() => navigateTo('profile', true)}
             onGoProfile={() => navigateTo('profile')}
             onStepChange={changeTestStep}
           />

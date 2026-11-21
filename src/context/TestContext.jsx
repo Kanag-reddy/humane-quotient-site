@@ -154,6 +154,12 @@ export function TestProvider({ children }) {
         throw new Error(data.error || 'Failed to submit test.');
       }
 
+      const finalResult = data.result
+        ? { ...data.result, version: testMode }
+        : { ...computed, version: testMode };
+      setResult(finalResult);
+      writeSession('huq_result', finalResult);
+
       setSubmissionId(data.id);
       setIsSubmitted(true);
       setEmailed(!!data.emailed);
