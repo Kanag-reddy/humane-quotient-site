@@ -52,6 +52,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
     updateDemographics,
     setStep,
     setPhase,
+    setTestMode,
     submitTest,
     resetTest
   } = useTest();
@@ -306,10 +307,44 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
           <div className="intro-card">
             <span className="eyebrow">Before you begin</span>
             <h1>Test your Humane Quotient</h1>
+            <div className="test-version-picker" role="radiogroup" aria-label="Choose test version">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={testMode === 'full'}
+                className={testMode === 'full' ? 'selected' : ''}
+                onClick={() => setTestMode('full')}
+              >
+                <span className="test-version-choice" aria-hidden="true">
+                  <i />
+                </span>
+                <span className="test-version-copy">
+                  <b>Full test</b>
+                  <strong>96 questions · about 12 minutes</strong>
+                  <small>The complete questionnaire: 12 statements for each of the 8 values.</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={testMode === 'quick'}
+                className={testMode === 'quick' ? 'selected' : ''}
+                onClick={() => setTestMode('quick')}
+              >
+                <span className="test-version-choice" aria-hidden="true">
+                  <i />
+                </span>
+                <span className="test-version-copy">
+                  <b>Quick test <em>BETA</em></b>
+                  <strong>32 questions · about 5 minutes</strong>
+                  <small>Version 1: 2 aspects × 2 statements for each value. Scores are scaled to the 12–60 scale.</small>
+                </span>
+              </button>
+            </div>
             <p className="lead" style={{ fontSize: '1.1rem' }}>
               {testMode === 'quick'
-                ? 'Eight steps, four statements each. This beta version has 32 questions and takes about 4 minutes.'
-                : 'Eight steps, twelve statements each. Think of a <b>typical week</b> in your life and answer as you truly are — not as you wish to be. There are no right or wrong answers. It takes about 12 minutes.'}
+                ? 'Eight steps, four statements each. Think of a typical week in your life and answer as you truly are — not as you wish to be. There are no right or wrong answers.'
+                : <>Eight steps, twelve statements each. Think of a <b>typical week</b> in your life and answer as you truly are — not as you wish to be. There are no right or wrong answers. It takes about 12 minutes.</>}
             </p>
 
             {/* Auth / Guest Option Banner */}
