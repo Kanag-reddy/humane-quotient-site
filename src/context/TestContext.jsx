@@ -109,9 +109,11 @@ export function TestProvider({ children }) {
 
   const isComplete = answers.every((x) => x >= 1 && x <= 5);
 
-  const computeAndSetResult = () => {
-    if (isComplete) {
-      const res = testMode === 'quick' ? scoreQuick(answers) : calculateScore(answers);
+  const computeAndSetResult = (answerOverride = null) => {
+    const effectiveAnswers = Array.isArray(answerOverride) ? answerOverride : answers;
+    const complete = effectiveAnswers.every((x) => x >= 1 && x <= 5);
+    if (complete) {
+      const res = testMode === 'quick' ? scoreQuick(effectiveAnswers) : calculateScore(effectiveAnswers);
       setResult(res);
       writeSession('huq_result', res);
       return res;
@@ -119,8 +121,9 @@ export function TestProvider({ children }) {
     return null;
   };
 
-  const submitTest = async (sendEmail = true) => {
-    const computed = computeAndSetResult();
+  const submitTest = async (sendEmail = true, answerOverride = null) => {
+    const effectiveAnswers = Array.isArray(answerOverride) ? answerOverride : answers;
+    const computed = computeAndSetResult(effectiveAnswers);
     if (!computed) {
       throw new Error(`Test incomplete. All ${activeQuestionCount} questions must be answered.`);
     }
@@ -129,7 +132,7 @@ export function TestProvider({ children }) {
     try {
       const payload = {
         version: testMode,
-        answers,
+        answers: effectiveAnswers,
         demographics,
         name: demographics.name || (user && user.name) || 'Anonymous',
         email: demographics.email || (user && user.email) || '',

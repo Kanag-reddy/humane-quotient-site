@@ -60,6 +60,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
   const [formErr, setFormErr] = useState('');
   const [savingErr, setSavingErr] = useState('');
   const scrollTimeoutRef = useRef(null);
+  const sectionAdvanceTimeoutRef = useRef(null);
   const finishTimeoutRef = useRef(null);
   const latestAnswersRef = useRef(answers);
   const latestStepRef = useRef(step);
@@ -71,6 +72,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
 
   useEffect(() => () => {
     clearTimeout(scrollTimeoutRef.current);
+    clearTimeout(sectionAdvanceTimeoutRef.current);
     clearTimeout(finishTimeoutRef.current);
   }, []);
 
@@ -163,6 +165,8 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
 
   const handleOptionSelect = useCallback((qIndex, mark) => {
     setAnswer(qIndex, mark);
+    const updatedAnswers = [...latestAnswersRef.current];
+    updatedAnswers[qIndex] = mark;
 
     // Debounced smooth scroll to the next unanswered question in this step
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
@@ -172,7 +176,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
       let nextUnanswered = null;
 
       for (let i = stepStart; i < stepEnd; i++) {
-        if (i !== qIndex && !latestAnswersRef.current[i]) {
+        if (i !== qIndex && !updatedAnswers[i]) {
           nextUnanswered = i;
           break;
         }
@@ -181,9 +185,25 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
       if (nextUnanswered !== null) {
         const el = document.getElementById(`q-card-${nextUnanswered}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        if (sectionAdvanceTimeoutRef.current) clearTimeout(sectionAdvanceTimeoutRef.current);
+        sectionAdvanceTimeoutRef.current = setTimeout(() => {
+          const currentStep = latestStepRef.current;
+          if (currentStep < 7) {
+            if (onStepChange) onStepChange(currentStep + 1, 'step');
+            else setStep(currentStep + 1);
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          } else {
+            setPhase('saving');
+            setSavingErr('');
+            submitTest(true, updatedAnswers).then(() => {
+              finishTimeoutRef.current = setTimeout(() => onFinishTest(), 1100);
+            }).catch((err) => setSavingErr(err.message || 'We could not reach the server.'));
+          }
+        }, 650);
       }
     }, 400);
-  }, [setAnswer, questionsPerStep]);
+  }, [setAnswer, questionsPerStep, onStepChange, setStep, setPhase, submitTest, onFinishTest]);
 
   const handleNextStep = async () => {
     if (step < 7) {
@@ -678,6 +698,15 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
       <div className="test" style={{ paddingTop: 0 }}>
         <div className="t-narrow">
           <div className="step-head">
+            <button
+              type="button"
+              className="section-back"
+              onClick={handlePrevStep}
+              data-tooltip={step === 0 ? 'Back to demographics' : `Back to ${step === 1 ? values[0].name : values[step - 1].name}`}
+              aria-label={step === 0 ? 'Back to demographics' : `Back to ${values[step - 1].name}`}
+            >
+              <span aria-hidden="true">←</span>
+            </button>
             <div className="ico">
               <ValueIcon name={currentVal.key} size={36} color="var(--crimson)" />
             </div>
@@ -692,7 +721,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
 
           {stepQuestions.map((question, index) => (
             <QuestionCard
-              key={question.id}
+              key={question.index}
               question={question}
               valueKey={currentVal.key}
               answer={answers[question.index]}
@@ -701,26 +730,6 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
             />
           ))}
 
-          <div className="nav-row">
-            <button className="btn ghost" type="button" onClick={handlePrevStep}>
-              ← {step === 0 ? 'Back to demographics' : 'Previous step'}
-            </button>
-
-            <span className="counter" role="img" aria-label={`${stepAnsweredCount} of 12 questions answered`}>
-              {Array.from({ length: 12 }, (_, i) => (
-                <i key={i} className={i < stepAnsweredCount ? 'on' : i === stepAnsweredCount ? 'next' : ''} />
-              ))}
-            </span>
-
-            <button
-              className="btn primary"
-              type="button"
-              disabled={!isStepDone}
-              onClick={handleNextStep}
-            >
-              {step === 7 ? 'See my HuQ profile →' : 'Next step →'}
-            </button>
-          </div>
         </div>
       </div>
     </>
