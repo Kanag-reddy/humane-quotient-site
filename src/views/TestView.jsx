@@ -698,15 +698,6 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
       <div className="test" style={{ paddingTop: 0 }}>
         <div className="t-narrow">
           <div className="step-head">
-            <button
-              type="button"
-              className="section-back"
-              onClick={handlePrevStep}
-              data-tooltip={step === 0 ? 'Back to demographics' : `Back to ${step === 1 ? values[0].name : values[step - 1].name}`}
-              aria-label={step === 0 ? 'Back to demographics' : `Back to ${values[step - 1].name}`}
-            >
-              <span aria-hidden="true">←</span>
-            </button>
             <div className="ico">
               <ValueIcon name={currentVal.key} size={36} color="var(--crimson)" />
             </div>
@@ -729,6 +720,18 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
               onSelect={handleOptionSelect}
             />
           ))}
+
+          <div className="section-back-wrap">
+            <button
+              type="button"
+              className="section-back"
+              onClick={handlePrevStep}
+              data-tooltip={step === 0 ? 'Back to demographics' : `Back to ${values[step - 1].name}`}
+              aria-label={step === 0 ? 'Back to demographics' : `Back to ${values[step - 1].name}`}
+            >
+              <span aria-hidden="true">←</span>
+            </button>
+          </div>
 
         </div>
       </div>
