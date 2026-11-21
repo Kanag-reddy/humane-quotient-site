@@ -9,6 +9,7 @@ export function UserHistoryView({ onSelectSubmission, onRetake }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('full');
 
   useEffect(() => {
     async function fetchHistory() {
@@ -35,9 +36,17 @@ export function UserHistoryView({ onSelectSubmission, onRetake }) {
   }, [token]);
 
   const handleViewProfile = (sub) => {
-    loadSavedResult(sub.scores, sub.answers, sub.demographics);
+    loadSavedResult(
+      { ...(sub.scores || {}), version: sub.version || 'full' },
+      sub.answers,
+      sub.demographics
+    );
     onSelectSubmission();
   };
+
+  const fullHistory = history.filter((sub) => (sub.version || 'full') === 'full');
+  const quickHistory = history.filter((sub) => sub.version === 'quick');
+  const visibleHistory = activeTab === 'full' ? fullHistory : quickHistory;
 
   return (
     <div className="history-page">
@@ -68,15 +77,40 @@ export function UserHistoryView({ onSelectSubmission, onRetake }) {
           </div>
         ) : (
           <div className="history-list">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <span style={{ fontWeight: 600 }}>{history.length} Completed Assessment{history.length !== 1 ? 's' : ''}</span>
+            <div className="history-toolbar">
+              <div className="history-tabs" role="tablist" aria-label="Test versions">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'full'}
+                  className={activeTab === 'full' ? 'active' : ''}
+                  onClick={() => setActiveTab('full')}
+                >
+                  Full Test <span>{fullHistory.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'quick'}
+                  className={activeTab === 'quick' ? 'active' : ''}
+                  onClick={() => setActiveTab('quick')}
+                >
+                  Quick Test <span>{quickHistory.length}</span>
+                </button>
+              </div>
               <button className="btn gold" style={{ padding: '8px 20px', fontSize: '0.9rem' }} onClick={onRetake}>
                 Take Another Assessment
               </button>
             </div>
 
+            {visibleHistory.length === 0 ? (
+              <div className="big-card" style={{ textAlign: 'center', padding: '36px 24px' }}>
+                <h2>No {activeTab === 'full' ? 'Full' : 'Quick'} Test submissions</h2>
+                <p style={{ margin: '8px auto 18px' }}>Your {activeTab === 'full' ? '96-question' : '32-question'} assessments will appear here.</p>
+              </div>
+            ) : (
             <div className="history-grid">
-              {history.map((sub, idx) => {
+              {visibleHistory.map((sub, idx) => {
                 const sc = sub.scores || {};
                 const l = levels[sc.level] || levels[0];
                 const dateStr = new Date(sub.createdAt).toLocaleDateString(undefined, {
@@ -88,7 +122,10 @@ export function UserHistoryView({ onSelectSubmission, onRetake }) {
                 return (
                   <div key={sub.submissionId || idx} className="card history-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <span className="history-date">{dateStr}</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span className="history-date">{dateStr}</span>
+                        <span className="history-version-chip">{(sub.version || 'full') === 'quick' ? 'Quick / Beta' : 'Full'}</span>
+                      </div>
                       <span className="chip" style={{ background: l.color, color: l.ink }}>
                         {l.name}
                       </span>
@@ -124,6 +161,7 @@ export function UserHistoryView({ onSelectSubmission, onRetake }) {
                 );
               })}
             </div>
+            )}
           </div>
         )}
       </div>

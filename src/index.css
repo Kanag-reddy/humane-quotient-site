@@ -417,6 +417,15 @@ svg.bloom .bsway{transform-origin:0 0;animation:bloom-sway 7s ease-in-out .5s in
 }
 .nav-login-btn{width:150px!important;height:44px!important;padding:6px 12px!important;font-size:1rem!important;min-height:44px!important;border-radius:999px!important}
 .nav-user-info{display:flex;align-items:center;gap:8px}
+.history-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.history-tabs{display:flex;align-items:center;gap:6px;padding:5px;border:1px solid var(--tan);border-radius:999px;background:rgba(228,213,203,.35)}
+.history-tabs button{display:flex;align-items:center;gap:8px;min-height:40px;border:0;border-radius:999px;background:transparent;color:var(--maroon);font:700 .92rem var(--sans);padding:8px 14px;cursor:pointer}
+.history-tabs button span{display:grid;place-items:center;min-width:24px;height:24px;border-radius:999px;background:rgba(71,5,0,.08);font-size:.78rem}
+.history-tabs button.active{background:var(--crimson);color:var(--cream);box-shadow:0 6px 16px rgba(133,5,0,.18)}
+.history-tabs button.active span{background:rgba(255,255,255,.18)}
+.history-version-chip{display:inline-flex;align-items:center;border:1px solid var(--tan);border-radius:999px;background:var(--cream);color:var(--maroon);font-size:.72rem;font-weight:700;padding:4px 10px;text-transform:none}
+.admin-history-tabs{margin-bottom:14px}
+@media (max-width:639px){.history-toolbar{align-items:stretch}.history-tabs{width:100%}.history-tabs button{flex:1;justify-content:center}.history-toolbar>.btn{width:100%}}
 .user-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;background:rgba(228,213,203,.6);color:var(--maroon);font-size:.88rem;font-weight:600}
 .admin-chip{background:var(--crimson);color:var(--cream);font-size:.65rem;padding:2px 6px;border-radius:4px;letter-spacing:1px}
 .btn-logout{background:none;border:1px solid var(--tan);border-radius:50%;width:34px;height:34px;display:grid;place-items:center;color:var(--maroon);cursor:pointer;transition:all .2s var(--ease)}

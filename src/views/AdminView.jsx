@@ -15,6 +15,7 @@ export function AdminView() {
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState('');
   const [expandedSubId, setExpandedSubId] = useState(null);
+  const [activeSubmissionTab, setActiveSubmissionTab] = useState('full');
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -247,7 +248,25 @@ export function AdminView() {
                     </p>
                   ) : (
                     <div className="admin-submissions-list" style={{ marginTop: '18px' }}>
-                      {searchResult.submissions.map((sub, idx) => {
+                      {(() => {
+                        const fullSubmissions = searchResult.submissions.filter((sub) => (sub.version || 'full') === 'full');
+                        const quickSubmissions = searchResult.submissions.filter((sub) => sub.version === 'quick');
+                        const visibleSubmissions = activeSubmissionTab === 'full' ? fullSubmissions : quickSubmissions;
+                        return (
+                          <>
+                            <div className="history-tabs admin-history-tabs" role="tablist" aria-label="Submission test versions">
+                              <button type="button" role="tab" aria-selected={activeSubmissionTab === 'full'} className={activeSubmissionTab === 'full' ? 'active' : ''} onClick={() => setActiveSubmissionTab('full')}>
+                                Full Test <span>{fullSubmissions.length}</span>
+                              </button>
+                              <button type="button" role="tab" aria-selected={activeSubmissionTab === 'quick'} className={activeSubmissionTab === 'quick' ? 'active' : ''} onClick={() => setActiveSubmissionTab('quick')}>
+                                Quick Test <span>{quickSubmissions.length}</span>
+                              </button>
+                            </div>
+                            {visibleSubmissions.length === 0 ? (
+                              <div className="big-card" style={{ textAlign: 'center', padding: '28px 18px' }}>
+                                <h3>No {activeSubmissionTab === 'full' ? 'Full' : 'Quick'} Test submissions</h3>
+                              </div>
+                            ) : visibleSubmissions.map((sub, idx) => {
                         const isExpanded = expandedSubId === sub.submissionId;
                         const sc = sub.scores || {};
                         const dateStr = new Date(sub.createdAt).toLocaleString();
@@ -256,7 +275,11 @@ export function AdminView() {
                           <div key={sub.submissionId || idx} className="admin-sub-item">
                             <div className="admin-sub-header">
                               <div>
-                                <b>{sub.name}</b> <span style={{ color: 'var(--bronze)', fontSize: '0.85rem' }}>({dateStr})</span>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                  <b>{sub.name}</b>
+                                  <span className="history-version-chip">{(sub.version || 'full') === 'quick' ? 'Quick / Beta' : 'Full'}</span>
+                                  <span style={{ color: 'var(--bronze)', fontSize: '0.85rem' }}>({dateStr})</span>
+                                </div>
                                 <div style={{ fontSize: '0.9rem', marginTop: '2px' }}>
                                   ID: <code>{sub.submissionId}</code> · HuQ: <b>{(Math.round((sc.huq || 0) * 10) / 10).toFixed(1)}/10</b> ({sc.total}/480) · Care Level: <b>{levels[sc.level]?.name || 'N/A'}</b>
                                 </div>
@@ -298,7 +321,10 @@ export function AdminView() {
                             )}
                           </div>
                         );
-                      })}
+                            })}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
