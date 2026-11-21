@@ -124,6 +124,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
   }
 
   const currentLevel = levels[result.level];
+  const isQuick = result.version === 'quick';
   const strongestKeys = result.strongest || [];
   const topValues = strongestKeys.map((k) => values.find((v) => v.key === k)).filter(Boolean);
   const primaryTop = topValues[0] || values[0];
@@ -356,7 +357,6 @@ export function ProfileView({ onGoPlan, onRetake }) {
                 const isTop = strongestKeys.includes(v.key);
                 const l = levels[v.level];
                 const cardPct = Math.max(0, Math.min(100, ((v.score - VALUE_MIN) / (VALUE_MAX - VALUE_MIN)) * 100));
-                const isQuick = result.version === 'quick';
                 const aspectScores = isQuick
                   ? Array.from(new Set(
                       quickQuestions.filter((question) => question.value === v.key).map((question) => question.aspect)
@@ -432,7 +432,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
                     <div className="aspect-insight">
                       {highestAspect === lowestAspect ? (
                         <p>
-                          <b>Your reflection areas are even:</b> both selected areas are rated {highestAspect}/{isQuick ? '10' : '15'} in this value.
+                          <b>Your reflection areas are even:</b> all {aspectScores.length} areas are rated {highestAspect}/{isQuick ? '10' : '15'} in this value.
                         </p>
                       ) : (
                         <>
