@@ -170,6 +170,44 @@ const HUQ = {
       strongest,
       max
     };
+  },
+  quick: {
+    version: 1,
+    totalQuestions: 32,
+    scale: 3,
+    score: function (answers) {
+      const scored = HUQ.values.map((v, vi) => {
+        const aspects = [0, 1].map((ai) => {
+          const first = answers[vi * 4 + ai * 2];
+          const second = answers[vi * 4 + ai * 2 + 1];
+          return first + second;
+        });
+        const raw = aspects[0] + aspects[1];
+        const score = raw * 3;
+        return {
+          key: v.key,
+          code: v.code,
+          name: v.name,
+          raw,
+          score,
+          quotient: score / 6,
+          level: HUQ.valueLevel(score),
+          aspects
+        };
+      });
+      const total = scored.reduce((x, v) => x + v.score, 0);
+      const max = Math.max(...scored.map((v) => v.score));
+      const strongest = scored.filter((v) => v.score === max).map((v) => v.key);
+      return {
+        values: scored,
+        total,
+        huq: total / 48,
+        level: HUQ.totalLevel(total),
+        strongest,
+        max,
+        version: 'quick'
+      };
+    }
   }
 };
 

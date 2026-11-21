@@ -22,11 +22,18 @@ router.post('/submit', optionalToken, async (req, res) => {
   let submittedAnswers = null;
   let respondentEmail = '';
   try {
-    const { answers, demographics, name, email, submissionId, sendEmail } = req.body || {};
+    const { answers, demographics, name, email, submissionId, sendEmail, version } = req.body || {};
+    const testVersion = version === 'quick' ? 'quick' : 'full';
+    const expectedLength = testVersion === 'quick' ? HUQ.quick.totalQuestions : HUQ.totalQuestions;
 
-    if (!Array.isArray(answers) || answers.length !== HUQ.totalQuestions ||
+    if (!Array.isArray(answers) || answers.length !== expectedLength ||
         !answers.every((a) => Number.isInteger(a) && a >= 1 && a <= 5)) {
-      return res.status(400).json({ ok: false, error: 'Invalid answers. Exactly 96 answers (1–5) required.' });
+      return res.status(400).json({
+        ok: false,
+        error: testVersion === 'quick'
+          ? 'Invalid answers. Exactly 32 quick-test answers (1–5) required.'
+          : 'Invalid answers. Exactly 96 full-test answers (1–5) required.'
+      });
     }
 
     if (submissionId !== undefined && (typeof submissionId !== 'string' || submissionId.trim().length > 100)) {
@@ -41,7 +48,7 @@ router.post('/submit', optionalToken, async (req, res) => {
     }
 
     submittedAnswers = answers;
-    const calculatedResult = HUQ.score(answers);
+    const calculatedResult = testVersion === 'quick' ? HUQ.quick.score(answers) : HUQ.score(answers);
     subId = submissionId ? submissionId.trim() : ('HuQ-' + crypto.randomBytes(4).toString('hex').toUpperCase());
 
     if (submissionId) {
@@ -68,6 +75,7 @@ router.post('/submit', optionalToken, async (req, res) => {
     }
 
     const submissionDoc = {
+      version: testVersion,
       submissionId: subId,
       userId,
       name: respondentName,

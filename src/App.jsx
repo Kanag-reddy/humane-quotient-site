@@ -1,6 +1,8 @@
 import React, { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { TestProvider, useTestRouting } from './context/TestContext';
+import { useTest } from './context/TestContext';
+import { setLanguage, useLanguage } from './i18n';
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
 import { HomeView } from './views/HomeView';
@@ -19,13 +21,20 @@ function readRoute() {
 }
 
 function AppContent() {
+  useLanguage();
   const { result, step, phase, setStep, setPhase, resetTest } = useTestRouting();
+  const { setTestMode } = useTest();
   const [currentRoute, setCurrentRoute] = useState(() => {
     const route = readRoute();
     return !result && (route === 'profile' || route === 'plan') ? 'test' : route;
   });
   const [displayRoute, setDisplayRoute] = useState(currentRoute);
   const [transitionState, setTransitionState] = useState('idle');
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('huq_language') || 'en';
+    setLanguage(saved);
+  }, []);
 
   useEffect(() => {
     const handleLocation = () => {
@@ -115,7 +124,10 @@ function AppContent() {
         <Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>
         {displayRoute === 'home' && (
           <HomeView
-            onStartTest={() => navigateTo('test')}
+            onStartTest={(mode) => {
+              setTestMode(mode);
+              navigateTo('test');
+            }}
             onOpenAbout={() => {
               const el = document.getElementById('about');
               if (el) el.scrollIntoView({ behavior: 'smooth' });

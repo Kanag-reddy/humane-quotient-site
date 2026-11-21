@@ -397,6 +397,68 @@ values.forEach((v, vi) => v.aspects.forEach((a, ai) => a.qs.forEach((text, qi) =
   });
 })));
 
+export const quickTotalQuestions = 32;
+export const quickQuestions = [
+  ['se', 0, 0, 'Low levels of self-centeredness', 'In a typical week, how often do you extend help to someone, even if it takes your time?'],
+  ['se', 0, 0, 'Low levels of self-centeredness', 'In a typical week, how often do you forgive someone even if they hurt you?'],
+  ['se', 0, 1, 'Sense of Connectedness', 'In a typical week, how often do you treat strangers with the same care and concern as you do with friends or family?'],
+  ['se', 0, 1, 'Sense of Connectedness', 'In a typical week, how often do you feel happy when others are happy?'],
+  ['em', 1, 0, 'Perspective taking', 'In a typical week, how often do you gauge the emotional state of a person by just looking at him/her?'],
+  ['em', 1, 0, 'Perspective taking', 'In a typical week, how often do you feel concerned when others struggle to reach their goals?'],
+  ['em', 1, 1, 'Understanding emotions', 'In a typical week, how often do you feel sad when someone else is feeling sad?'],
+  ['em', 1, 1, 'Understanding emotions', 'In a typical week how often do you put yourself in someone else’s shoes to understand how they feel?'],
+  ['in', 2, 0, 'Ethical commitment', 'In a typical week, how well do you admit your mistakes instead of hiding them?'],
+  ['in', 2, 0, 'Ethical commitment', 'In a typical week, how well do you speak up when you know something is unfair?'],
+  ['in', 2, 1, 'Ethical autonomy', 'In a typical week, how often do you follow what you believe is right, even when others disagree?'],
+  ['in', 2, 1, 'Ethical autonomy', 'In a typical week, how often do you listen to advice but still decide based on what feels ethically right to you?'],
+  ['ac', 3, 0, 'Respecting differences', 'In a typical week, how often do you treat everyone equally, irrespective of their background or opinion?'],
+  ['ac', 3, 0, 'Respecting differences', 'In a typical week, how often do you focus on what can be done, instead of complaining?'],
+  ['ac', 3, 1, 'Self-acceptance', 'In a typical week, how often do you let yourself feel without judging your feelings or emotions?'],
+  ['ac', 3, 1, 'Self-acceptance', 'In a typical week, how often do you notice your emotions as soon as they arise?'],
+  ['re', 4, 0, 'Meeting needs', 'In a typical week, how well do you notice when someone is feeling low?'],
+  ['re', 4, 0, 'Meeting needs', 'In a typical week, how well do you find simple ways to help someone in difficulty?'],
+  ['re', 4, 1, 'Personal accountability', 'In a typical week, how well do you avoid blaming others when something goes wrong?'],
+  ['re', 4, 1, 'Personal accountability', 'In a typical week, how well do you accept both good and bad results of your decisions?'],
+  ['eq', 5, 0, 'Barrier removal', 'In a typical week, how often do you make sure everyone, including quieter members, gets a chance to speak in group work?'],
+  ['eq', 5, 0, 'Barrier removal', 'In a typical week, how well do you volunteer to help people, even if you don’t know them personally?'],
+  ['eq', 5, 1, 'Personalized inclusion', 'In a typical week, how often do you adjust your words to match each person’s interests?'],
+  ['eq', 5, 1, 'Personalized inclusion', 'In a typical week, how often do you check in with individuals to make sure they feel included and understood?'],
+  ['di', 6, 0, 'Varied perspectives', 'In a typical week, how often do you notice the ways people’s backgrounds shape their perspectives?'],
+  ['di', 6, 0, 'Varied perspectives', 'In a typical week, how often do you make different people feel accepted and supported?'],
+  ['di', 6, 1, 'Embracing differences', 'In a typical week how often do you adjust in group activities to make use of everyone’s unique skills?'],
+  ['di', 6, 1, 'Embracing differences', 'In a typical week how often do you avoid judging a whole group based on one person?'],
+  ['ic', 7, 0, 'Continuous learning', 'In a typical week how often do you handle misunderstandings or conflicts that arise from differences?'],
+  ['ic', 7, 0, 'Continuous learning', 'In a typical week how often do you pause to reflect on what others’ perspectives teach you?'],
+  ['ic', 7, 1, 'Equitable access', 'In a typical week how often do you mentor or sponsor people who might otherwise be overlooked?'],
+  ['ic', 7, 1, 'Equitable access', 'In a typical week how often do you speak up for resources or support for underserved groups?']
+].map(([value, valueIndex, aspectIndex, aspect, text], index) => ({
+  index, value, valueIndex, aspectIndex, aspect, text
+}));
+
+export function scoreQuick(answers) {
+  const scoredValues = values.map((v, vi) => {
+    const aspects = [0, 1].map((ai) =>
+      answers[vi * 4 + ai * 2] + answers[vi * 4 + ai * 2 + 1]
+    );
+    const raw = aspects[0] + aspects[1];
+    const score = raw * 3;
+    return {
+      key: v.key,
+      code: v.code,
+      name: v.name,
+      raw,
+      score,
+      quotient: score / 6,
+      level: valueLevel(score),
+      aspects
+    };
+  });
+  const total = scoredValues.reduce((x, v) => x + v.score, 0);
+  const max = Math.max(...scoredValues.map((v) => v.score));
+  const strongest = scoredValues.filter((v) => v.score === max).map((v) => v.key);
+  return { values: scoredValues, total, huq: total / 48, level: totalLevel(total), strongest, max, version: 'quick' };
+}
+
 export function score(answers) {
   const scoredValues = values.map((v, vi) => {
     const aspects = v.aspects.map((a, ai) => {

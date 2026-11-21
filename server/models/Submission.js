@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const SubmissionSchema = new mongoose.Schema({
+  version: {
+    type: String,
+    enum: ['full', 'quick'],
+    default: 'full'
+  },
   submissionId: {
     type: String,
     required: true,

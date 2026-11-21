@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { score as calculateScore, totalQuestions } from '../data/huqData';
+import { score as calculateScore, scoreQuick, totalQuestions, quickTotalQuestions } from '../data/huqData';
 import { useAuth } from './AuthContext';
 
 const TestContext = createContext();
@@ -35,11 +35,18 @@ function writeSession(key, value) {
 
 export function TestProvider({ children }) {
   const { user, token } = useAuth();
+  const [testMode, setTestModeState] = useState(() => {
+    const saved = readSessionText('huq_testMode', 'full');
+    return saved === 'quick' ? 'quick' : 'full';
+  });
+  const activeQuestionCount = testMode === 'quick' ? quickTotalQuestions : totalQuestions;
 
   const [answers, setAnswers] = useState(() => {
     const parsed = readSessionJson('huq_answers', null);
-    if (Array.isArray(parsed) && parsed.length === totalQuestions) return parsed;
-    return Array(totalQuestions).fill(0);
+    const mode = readSessionText('huq_testMode', 'full');
+    const expected = mode === 'quick' ? quickTotalQuestions : totalQuestions;
+    if (Array.isArray(parsed) && parsed.length === expected) return parsed;
+    return Array(expected).fill(0);
   });
 
   const [demographics, setDemographics] = useState(() => {
@@ -104,7 +111,7 @@ export function TestProvider({ children }) {
 
   const computeAndSetResult = () => {
     if (isComplete) {
-      const res = calculateScore(answers);
+      const res = testMode === 'quick' ? scoreQuick(answers) : calculateScore(answers);
       setResult(res);
       writeSession('huq_result', res);
       return res;
@@ -115,12 +122,13 @@ export function TestProvider({ children }) {
   const submitTest = async (sendEmail = true) => {
     const computed = computeAndSetResult();
     if (!computed) {
-      throw new Error('Test incomplete. All 96 questions must be answered.');
+      throw new Error(`Test incomplete. All ${activeQuestionCount} questions must be answered.`);
     }
 
     setIsSubmitting(true);
     try {
       const payload = {
+        version: testMode,
         answers,
         demographics,
         name: demographics.name || (user && user.name) || 'Anonymous',
@@ -157,7 +165,7 @@ export function TestProvider({ children }) {
   };
 
   const resetTest = useCallback(() => {
-    const freshAnswers = Array(totalQuestions).fill(0);
+    const freshAnswers = Array(testMode === 'quick' ? quickTotalQuestions : totalQuestions).fill(0);
     setAnswers(freshAnswers);
     setResult(null);
     setStep(0);
@@ -172,6 +180,24 @@ export function TestProvider({ children }) {
         console.error(`Could not clear ${key} from this browser session.`, error);
       }
     });
+  }, [testMode]);
+
+  const setTestMode = useCallback((mode) => {
+    const nextMode = mode === 'quick' ? 'quick' : 'full';
+    setTestModeState(nextMode);
+    writeSession('huq_testMode', nextMode);
+    const freshAnswers = Array(nextMode === 'quick' ? quickTotalQuestions : totalQuestions).fill(0);
+    setAnswers(freshAnswers);
+    setResult(null);
+    setStep(0);
+    setPhase('intro');
+    setSubmissionId('');
+    setIsSubmitted(false);
+    setEmailed(false);
+    writeSession('huq_answers', freshAnswers);
+    ['huq_result', 'huq_subId', 'huq_submitted', 'huq_emailed'].forEach((key) => {
+      try { sessionStorage.removeItem(key); } catch (error) { console.error(`Could not clear ${key} from this browser session.`, error); }
+    });
   }, []);
 
   const loadSavedResult = (savedResult, savedAnswers = null, savedDemo = null) => {
@@ -182,6 +208,9 @@ export function TestProvider({ children }) {
   };
 
   const value = {
+    testMode,
+    setTestMode,
+    activeQuestionCount,
     answers,
     demographics,
     result,

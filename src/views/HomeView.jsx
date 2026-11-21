@@ -6,6 +6,7 @@ import { ValueIcon } from '../components/Icons';
 
 export function HomeView({ onStartTest, onOpenAbout }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [testMode, setTestMode] = useState(() => sessionStorage.getItem('huq_testMode') || 'full');
 
   const selectedValue = values[selectedIdx];
 
@@ -106,8 +107,32 @@ export function HomeView({ onStartTest, onOpenAbout }) {
             <p className="lead">
               How far has your care evolved — from caring for yourself, to caring for family and community, to caring for everyone? Discover your Humane Quotient and a path to grow it.
             </p>
+            <div className="home-test-options" aria-label="Test options">
+              <div className="test-mode-picker" role="radiogroup" aria-label="Choose test version">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={testMode === 'full'}
+                  className={testMode === 'full' ? 'selected' : ''}
+                  onClick={() => setTestMode('full')}
+                >
+                  <b>Full Test</b>
+                  <span>96 questions · about 12 minutes</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={testMode === 'quick'}
+                  className={testMode === 'quick' ? 'selected' : ''}
+                  onClick={() => setTestMode('quick')}
+                >
+                  <b>Beta Test</b>
+                  <span>32 questions · about 4 minutes</span>
+                </button>
+              </div>
+            </div>
             <div className="actions">
-              <button className="btn gold" onClick={onStartTest}>
+              <button className="btn gold" onClick={() => onStartTest(testMode)}>
                 Begin the test →
               </button>
               <button
@@ -122,10 +147,10 @@ export function HomeView({ onStartTest, onOpenAbout }) {
                 <b>8</b>core humane values
               </div>
               <div>
-                <b>96</b>reflective questions
+                <b>{testMode === 'quick' ? '32' : '96'}</b>reflective questions
               </div>
               <div>
-                <b>~12</b>minutes
+                <b>~{testMode === 'quick' ? '4' : '12'}</b>minutes
               </div>
             </div>
           </div>

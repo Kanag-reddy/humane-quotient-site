@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { useTest } from '../context/TestContext';
 import { useAuth } from '../context/AuthContext';
-import { values, questions, options, profileOptions, totalQuestions } from '../data/huqData';
+import { values, questions, quickQuestions, options, profileOptions, totalQuestions, quickTotalQuestions } from '../data/huqData';
 import { ValueIcon } from '../components/Icons';
 
 const loaderPetalColors = ['var(--gold)', 'var(--amber)', 'var(--crimson)', 'var(--rust)'];
@@ -41,6 +41,7 @@ const QuestionCard = memo(function QuestionCard({ question, valueKey, answer, in
 export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const {
+    testMode,
     answers,
     demographics,
     step,
@@ -63,6 +64,9 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
   const latestStepRef = useRef(step);
   latestAnswersRef.current = answers;
   latestStepRef.current = step;
+  const activeQuestions = testMode === 'quick' ? quickQuestions : questions;
+  const questionsPerStep = testMode === 'quick' ? 4 : 12;
+  const activeQuestionCount = testMode === 'quick' ? quickTotalQuestions : totalQuestions;
 
   useEffect(() => () => {
     clearTimeout(scrollTimeoutRef.current);
@@ -143,7 +147,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
     // Start at first incomplete step
     let startStep = 0;
     for (let s = 0; s < 8; s++) {
-      if (answers.slice(s * 12, s * 12 + 12).some((a) => !a)) {
+      if (answers.slice(s * questionsPerStep, s * questionsPerStep + questionsPerStep).some((a) => !a)) {
         startStep = s;
         break;
       }
@@ -162,8 +166,8 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
     // Debounced smooth scroll to the next unanswered question in this step
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
-      const stepStart = latestStepRef.current * 12;
-      const stepEnd = stepStart + 12;
+      const stepStart = latestStepRef.current * questionsPerStep;
+      const stepEnd = stepStart + questionsPerStep;
       let nextUnanswered = null;
 
       for (let i = stepStart; i < stepEnd; i++) {
@@ -178,7 +182,7 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 400);
-  }, [setAnswer]);
+  }, [setAnswer, questionsPerStep]);
 
   const handleNextStep = async () => {
     if (step < 7) {
@@ -303,7 +307,9 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
             <span className="eyebrow">Before you begin</span>
             <h1>Test your Humane Quotient</h1>
             <p className="lead" style={{ fontSize: '1.1rem' }}>
-              Eight steps, twelve statements each. Think of a <b>typical week</b> in your life and answer as you truly are — not as you wish to be. There are no right or wrong answers. It takes about 12 minutes.
+              {testMode === 'quick'
+                ? 'Eight steps, four statements each. This beta version has 32 questions and takes about 4 minutes.'
+                : 'Eight steps, twelve statements each. Think of a <b>typical week</b> in your life and answer as you truly are — not as you wish to be. There are no right or wrong answers. It takes about 12 minutes.'}
             </p>
 
             {/* Auth / Guest Option Banner */}
@@ -580,18 +586,18 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
 
   // Phase: STEP (Questions)
   const currentVal = values[step];
-  const stepStart = step * 12;
-  const stepQuestions = questions.slice(stepStart, stepStart + 12);
-  const stepAnsweredCount = answers.slice(stepStart, stepStart + 12).filter(Boolean).length;
+  const stepStart = step * questionsPerStep;
+  const stepQuestions = activeQuestions.slice(stepStart, stepStart + questionsPerStep);
+  const stepAnsweredCount = answers.slice(stepStart, stepStart + questionsPerStep).filter(Boolean).length;
   const totalAnsweredCount = answers.filter(Boolean).length;
-  const isStepDone = stepAnsweredCount === 12;
+  const isStepDone = stepAnsweredCount === questionsPerStep;
 
   return (
     <>
       <div className="stepper">
         <div className="row">
           {values.map((v, i) => {
-            const dn = answers.slice(i * 12, i * 12 + 12).every(Boolean);
+            const dn = answers.slice(i * questionsPerStep, i * questionsPerStep + questionsPerStep).every(Boolean);
             const isCur = i === step;
             return (
               <div
@@ -627,10 +633,10 @@ export function TestView({ onFinishTest, onGoProfile, onStepChange }) {
           role="progressbar"
           aria-label="Test progress"
           aria-valuemin={0}
-          aria-valuemax={totalQuestions}
+          aria-valuemax={activeQuestionCount}
           aria-valuenow={totalAnsweredCount}
         >
-          <i style={{ '--progress': totalAnsweredCount / totalQuestions }} />
+          <i style={{ '--progress': totalAnsweredCount / activeQuestionCount }} />
         </div>
       </div>
 

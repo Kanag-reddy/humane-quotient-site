@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTestResult } from '../context/TestContext';
 import { UserIcon, ShieldIcon, LogoutIcon } from './Icons';
+import { LANGUAGES, getLanguage, setLanguage } from '../i18n';
 
 export function Navbar({ currentRoute, setCurrentRoute }) {
   const { user, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
   const { result } = useTestResult();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [language, setLanguageState] = useState(() => getLanguage());
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const languageRef = useRef(null);
+
+  useEffect(() => {
+    const closeLanguage = (event) => {
+      if (languageRef.current && !languageRef.current.contains(event.target)) setLanguageOpen(false);
+    };
+    document.addEventListener('pointerdown', closeLanguage);
+    return () => document.removeEventListener('pointerdown', closeLanguage);
+  }, []);
 
   const navigate = (route) => {
     setCurrentRoute(route);
@@ -100,31 +112,40 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
           Action Plan
         </a>
 
-        {isAuthenticated && (
-          <a
-            href="#/history"
-            className={currentRoute === 'history' ? 'active' : ''}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('history');
-            }}
+        <div className="nav-language" ref={languageRef}>
+          <button
+            type="button"
+            className="nav-language-btn"
+            aria-haspopup="listbox"
+            aria-expanded={languageOpen}
+            onClick={() => setLanguageOpen((open) => !open)}
           >
-            My History
-          </a>
-        )}
-
-        {isAdmin && (
-          <a
-            href="#/admin"
-            className={`admin-nav-link ${currentRoute === 'admin' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('admin');
-            }}
-          >
-            <ShieldIcon size={15} /> Admin Console
-          </a>
-        )}
+            <span aria-hidden="true">◎</span>
+            <span>{LANGUAGES.find(([code]) => code === language)?.[1] || 'English'}</span>
+            <span className="nav-language-chevron" aria-hidden="true">⌄</span>
+          </button>
+          {languageOpen && (
+            <div className="nav-language-menu" role="listbox" aria-label="Choose language">
+              {LANGUAGES.map(([code, name]) => (
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={language === code}
+                  key={code}
+                  className={language === code ? 'active' : ''}
+                  onClick={() => {
+                    setLanguageState(code);
+                    setLanguage(code);
+                    setLanguageOpen(false);
+                  }}
+                >
+                  <span>{name}</span>
+                  {language === code && <b aria-hidden="true">✓</b>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="nav-auth-section">
           {isAuthenticated ? (
@@ -157,6 +178,32 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
             </button>
           )}
         </div>
+
+        {isAuthenticated && (
+          <a
+            href="#/history"
+            className={currentRoute === 'history' ? 'active' : ''}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('history');
+            }}
+          >
+            My History
+          </a>
+        )}
+
+        {isAdmin && (
+          <a
+            href="#/admin"
+            className={`admin-nav-link ${currentRoute === 'admin' ? 'active' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('admin');
+            }}
+          >
+            <ShieldIcon size={15} /> Admin Console
+          </a>
+        )}
       </nav>
     </header>
   );
