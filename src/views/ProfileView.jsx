@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { useTest } from '../context/TestContext';
 import { useAuth } from '../context/AuthContext';
-import { values, levels, VALUE_MIN, VALUE_MAX, TOTAL_MIN, TOTAL_MAX, huqAssessment } from '../data/huqData';
+import { values, quickQuestions, levels, VALUE_MIN, VALUE_MAX, TOTAL_MIN, TOTAL_MAX, huqAssessment } from '../data/huqData';
 import { FlowerSVG } from '../components/FlowerSVG';
 import { BudSVG } from '../components/BudSVG';
 import { PetalsBackground } from '../components/PetalsBackground';
@@ -110,7 +110,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
             <span className="eyebrow">No data yet</span>
             <h1>Your profile is waiting for your answers</h1>
             <p className="lead">
-              Your profile appears here once you have answered all 96 questions. It takes about 12 minutes.
+              Your profile appears here once you have completed a test. Choose the Full or Beta test to begin.
             </p>
             <div className="state-actions">
               <button className="btn primary" onClick={onRetake}>
@@ -312,7 +312,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
                   <span className="report-label">Your eight-value spread</span>
                   <h3>{highestScore - lowestScore} point{highestScore - lowestScore === 1 ? '' : 's'} between highest and lowest</h3>
                   <p>
-                    Highest: {formatValueNames(scoredValues.filter((value) => value.score === highestScore))}. Lowest: {formatValueNames(growthValues)}. Compare each value’s four reflection areas below to see where those scores came from.
+                    Highest: {formatValueNames(scoredValues.filter((value) => value.score === highestScore))}. Lowest: {formatValueNames(growthValues)}. Compare each value’s {isQuick ? 'two' : 'four'} reflection areas below to see where those scores came from.
                   </p>
                 </article>
               </div>
@@ -356,10 +356,20 @@ export function ProfileView({ onGoPlan, onRetake }) {
                 const isTop = strongestKeys.includes(v.key);
                 const l = levels[v.level];
                 const cardPct = Math.max(0, Math.min(100, ((v.score - VALUE_MIN) / (VALUE_MAX - VALUE_MIN)) * 100));
-                const aspectScores = def.aspects.map((aspect, index) => ({
-                  name: aspect.name,
-                  score: v.aspects?.[index] || 0
-                }));
+                const isQuick = result.version === 'quick';
+                const aspectScores = isQuick
+                  ? Array.from(new Set(
+                      quickQuestions.filter((question) => question.value === v.key).map((question) => question.aspect)
+                    )).map((name) => {
+                      const index = Array.from(new Set(
+                        quickQuestions.filter((question) => question.value === v.key).map((question) => question.aspect)
+                      )).indexOf(name);
+                      return { name, score: v.aspects?.[index] || 0 };
+                    })
+                  : def.aspects.map((aspect, index) => ({
+                      name: aspect.name,
+                      score: v.aspects?.[index] || 0
+                    }));
                 const highestAspect = Math.max(...aspectScores.map((aspect) => aspect.score));
                 const lowestAspect = Math.min(...aspectScores.map((aspect) => aspect.score));
                 const leadingAspects = aspectScores.filter((aspect) => aspect.score === highestAspect);
@@ -409,7 +419,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
                     <div className="score-narrative">
                       <h4>What this score means</h4>
                       <p>
-                        {describeScoreBand(v.score)} Across 12 {def.name.toLowerCase()} statements, your average response was {describeResponseAverage(v.score, 12)}. HuQ describes this score band as {l.name}; this is a summary of your answers, not a comparison with other people.
+                        {describeScoreBand(v.score)} Across {isQuick ? '4' : '12'} {def.name.toLowerCase()} statements, your average response was {describeResponseAverage(isQuick ? (v.raw || 0) : v.score, isQuick ? 4 : 12)}. HuQ describes this score band as {l.name}; this is a summary of your answers, not a comparison with other people.
                       </p>
                       <p>
                         <b>{def.name} through {def.facet.toLowerCase()}:</b> {def.facetText}
@@ -422,15 +432,15 @@ export function ProfileView({ onGoPlan, onRetake }) {
                     <div className="aspect-insight">
                       {highestAspect === lowestAspect ? (
                         <p>
-                          <b>Your reflection areas are even:</b> all four are rated {highestAspect}/15 in this value.
+                          <b>Your reflection areas are even:</b> both selected areas are rated {highestAspect}/{isQuick ? '10' : '15'} in this value.
                         </p>
                       ) : (
                         <>
                           <p>
-                            <b>Most present in your answers:</b> {leadingAspects.map((aspect) => aspect.name).join(', ')} ({highestAspect}/15).
+                            <b>Most present in your answers:</b> {leadingAspects.map((aspect) => aspect.name).join(', ')} ({highestAspect}/{isQuick ? '10' : '15'}).
                           </p>
                           <p>
-                            <b>Worth exploring:</b> {exploringAspects.map((aspect) => aspect.name).join(', ')} ({lowestAspect}/15).
+                            <b>Worth exploring:</b> {exploringAspects.map((aspect) => aspect.name).join(', ')} ({lowestAspect}/{isQuick ? '10' : '15'}).
                           </p>
                         </>
                       )}
@@ -441,16 +451,16 @@ export function ProfileView({ onGoPlan, onRetake }) {
                         <div key={k}>
                           <span>{aspect.name}</span>
                           <span className="t">
-                            <i style={{ width: `${(aspect.score / 15) * 100}%` }} />
+                            <i style={{ width: `${(aspect.score / (isQuick ? 10 : 15)) * 100}%` }} />
                           </span>
-                          <em>{aspect.score}/15</em>
+                          <em>{aspect.score}/{isQuick ? '10' : '15'}</em>
                         </div>
                       ))}
                     </div>
                     <ul className="aspect-explanations">
                       {aspectScores.map((aspect) => (
                         <li key={aspect.name}>
-                          <b>{aspect.name}:</b> {aspect.score}/15 across three statements; average response {describeResponseAverage(aspect.score, 3)}. {describeAspectBand(aspect.score)}.
+                          <b>{aspect.name}:</b> {aspect.score}/{isQuick ? '10' : '15'} across {isQuick ? 'two' : 'three'} statements; average response {describeResponseAverage(aspect.score, isQuick ? 2 : 3)}. {describeAspectBand(aspect.score)}.
                         </li>
                       ))}
                     </ul>

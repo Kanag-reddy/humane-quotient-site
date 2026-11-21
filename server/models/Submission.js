@@ -51,7 +51,9 @@ const SubmissionSchema = new mongoose.Schema({
       name: String,
       score: Number,
       quotient: Number,
-      level: Number
+      level: Number,
+      raw: Number,
+      aspects: [Number]
     }],
     total: Number,
     huq: Number,

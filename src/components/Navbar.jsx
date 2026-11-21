@@ -120,9 +120,14 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
             aria-expanded={languageOpen}
             onClick={() => setLanguageOpen((open) => !open)}
           >
-            <span aria-hidden="true">◎</span>
+            <svg aria-hidden="true" viewBox="0 0 32 32" width="30" height="30" fill="none">
+              <circle cx="16" cy="16" r="13" stroke="currentColor" strokeWidth="2.2" />
+              <path d="M3 16h26M16 3c4.2 3.7 6.4 8 6.4 13S20.2 25.3 16 29C11.8 25.3 9.6 21 9.6 16S11.8 6.7 16 3Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+            </svg>
             <span>{LANGUAGES.find(([code]) => code === language)?.[1] || 'English'}</span>
-            <span className="nav-language-chevron" aria-hidden="true">⌄</span>
+            <svg className="nav-language-chevron" aria-hidden="true" viewBox="0 0 16 16" width="18" height="18" fill="none">
+              <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           {languageOpen && (
             <div className="nav-language-menu" role="listbox" aria-label="Choose language">

@@ -23,6 +23,7 @@ const mailer = SMTP.host && SMTP.user && SMTP.pass
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function reportHtml(name, r) {
+  const testLabel = r.version === 'quick' ? 'Beta Test (32 questions)' : 'Full Test (96 questions)';
   const LEVEL_NAMES = HUQ.levels.map((l) => l.name);
   const col = (i) => HUQ.levels[i].color;
   const ink = (i) => HUQ.levels[i].ink;
@@ -48,7 +49,7 @@ function reportHtml(name, r) {
   return `<div style="background:#FFFDE9;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#470500">
   <div style="max-width:620px;margin:0 auto">
     <div style="background:#850500;color:#FFFDE9;border-radius:18px;padding:30px;text-align:center">
-      <div style="letter-spacing:2px;font-size:12px;color:#E0AC27;text-transform:uppercase">Your Humane Quotient Report</div>
+      <div style="letter-spacing:2px;font-size:12px;color:#E0AC27;text-transform:uppercase">Your Humane Quotient Report · ${esc(testLabel)}</div>
       <h1 style="font-family:Georgia,serif;font-weight:normal;margin:10px 0 0;font-size:26px">${esc(name)}</h1>
       <div style="font-family:Georgia,serif;font-style:italic;font-size:64px;line-height:1.1;color:#E0AC27">${(Math.round(r.huq * 10) / 10).toFixed(1)}<span style="font-size:20px;color:#E4D5CB"> / 10</span></div>
       <div style="display:inline-block;background:${col(r.level)};color:${ink(r.level)};border:1px solid #FFFDE9;border-radius:100px;padding:6px 20px;font-weight:bold;font-size:13px;text-transform:uppercase;letter-spacing:1px">${esc(LEVEL_NAMES[r.level])}</div>
