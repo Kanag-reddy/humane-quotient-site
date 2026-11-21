@@ -12,7 +12,7 @@ const LANGUAGES = [
 ];
 
 let dictionary = null;
-let currentLanguage = 'en';
+let currentLanguage = sessionStorage.getItem('huq_language') || 'en';
 
 function hash(text) {
   let h = 0x811c9dc5;
@@ -78,6 +78,7 @@ export async function setLanguage(code) {
   const next = LANGUAGES.some(([value]) => value === code) ? code : 'en';
   currentLanguage = next;
   dictionary = null;
+  sessionStorage.setItem('huq_language', next);
   if (next !== 'en') {
     try {
       const response = await fetch(`/i18n/${next}.json`);
@@ -90,8 +91,7 @@ export async function setLanguage(code) {
   document.documentElement.dataset.script = {
     hi: 'deva', te: 'telu', ta: 'taml', kn: 'knda', ml: 'mlym', bn: 'beng'
   }[next] || 'latin';
-  sessionStorage.setItem('huq_language', next);
-  window.dispatchEvent(new CustomEvent('huq-language-change'));
+  window.dispatchEvent(new CustomEvent('huq-language-change', { detail: { code: next } }));
 }
 
 export function getLanguage() {

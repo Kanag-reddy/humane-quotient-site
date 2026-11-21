@@ -16,8 +16,13 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
     const closeLanguage = (event) => {
       if (languageRef.current && !languageRef.current.contains(event.target)) setLanguageOpen(false);
     };
+    const updateLanguage = (event) => setLanguageState(event.detail?.code || getLanguage());
     document.addEventListener('pointerdown', closeLanguage);
-    return () => document.removeEventListener('pointerdown', closeLanguage);
+    window.addEventListener('huq-language-change', updateLanguage);
+    return () => {
+      document.removeEventListener('pointerdown', closeLanguage);
+      window.removeEventListener('huq-language-change', updateLanguage);
+    };
   }, []);
 
   const navigate = (route) => {
