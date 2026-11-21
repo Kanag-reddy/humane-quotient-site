@@ -20,13 +20,21 @@ function readRoute() {
   return ['home', 'test', 'profile', 'plan', 'admin', 'history'].includes(route) ? route : 'home';
 }
 
+function hasStoredResult() {
+  try {
+    return !!sessionStorage.getItem('huq_result');
+  } catch (error) {
+    return false;
+  }
+}
+
 function AppContent() {
   useLanguage();
   const { result, step, phase, setStep, setPhase, resetTest } = useTestRouting();
   const { setTestMode } = useTest();
   const [currentRoute, setCurrentRoute] = useState(() => {
     const route = readRoute();
-    return !result && (route === 'profile' || route === 'plan') ? 'test' : route;
+    return !result && !hasStoredResult() && (route === 'profile' || route === 'plan') ? 'test' : route;
   });
   const [displayRoute, setDisplayRoute] = useState(currentRoute);
   const [transitionState, setTransitionState] = useState('idle');
@@ -39,7 +47,7 @@ function AppContent() {
   useEffect(() => {
     const handleLocation = () => {
       let route = readRoute();
-      if (!result && (route === 'profile' || route === 'plan')) {
+      if (!result && !hasStoredResult() && (route === 'profile' || route === 'plan')) {
         window.history.replaceState(window.history.state, '', '#/test');
         route = 'test';
       }
@@ -94,7 +102,7 @@ function AppContent() {
   }, [result]);
 
   const navigateTo = (route, forceProfile = false) => {
-    if (!forceProfile && !result && (route === 'profile' || route === 'plan')) route = 'test';
+    if (!forceProfile && !result && !hasStoredResult() && (route === 'profile' || route === 'plan')) route = 'test';
     if (route === 'test') {
       const nextPhase = result || phase === 'saving' ? 'intro' : phase;
       const currentState = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
