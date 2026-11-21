@@ -50,7 +50,7 @@ html[lang="bn"] body{font-family:"Jost","Noto Sans Bengali",sans-serif}
 html{overflow-x:clip;scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-total) + 16px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--cream);color:var(--maroon);font-family:var(--sans);font-size:var(--fs-body);line-height:1.65;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:none}
-h1,h2,h3,h4{font-family:var(--sans);line-height:1.15;margin:0 0 .5em;letter-spacing:-.01em}
+h1,h2,h3,h4{font-family:var(--serif);line-height:1.15;margin:0 0 .5em;letter-spacing:-.01em}
 h2{font-size:clamp(1.55rem,1.1rem + 2.2vw,2.7rem);font-weight:600}
 h3{font-size:clamp(1.12rem,.98rem + .6vw,1.3rem);font-weight:600}
 p{margin:0 0 1em}
@@ -66,7 +66,7 @@ section{padding:var(--space-section) 0}
 .nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:var(--nav-total);
   padding:env(safe-area-inset-top,0px) max(var(--nav-pad),env(safe-area-inset-right)) 0 max(var(--nav-pad),env(safe-area-inset-left));
   background:var(--nav-glass-bg);backdrop-filter:blur(var(--nav-glass-blur));-webkit-backdrop-filter:blur(var(--nav-glass-blur));border-bottom:1px solid var(--nav-border)}
-.brand{display:flex;align-items:center;gap:10px;min-height:var(--tap);position:relative;z-index:2;white-space:nowrap;text-decoration:none;color:var(--maroon);font-weight:500;letter-spacing:.04em;text-transform:uppercase;font-size:clamp(.78rem,.7rem + .45vw,.9rem)}
+.brand{display:flex;align-items:center;gap:10px;min-height:var(--tap);position:relative;z-index:2;white-space:nowrap;text-decoration:none;color:var(--maroon);font-family:var(--serif);font-weight:600;letter-spacing:.01em;font-size:clamp(.78rem,.7rem + .45vw,.95rem)}
 .brand b{color:var(--crimson);font-weight:700}
 .nav nav{position:fixed;top:0;left:0;right:0;z-index:1;display:flex;flex-direction:column;gap:2px;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   padding:calc(var(--nav-total) + 18px) max(var(--gutter),env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(var(--gutter),env(safe-area-inset-left));
@@ -93,7 +93,7 @@ section{padding:var(--space-section) 0}
 .hero{position:relative;display:grid;align-items:center;overflow:hidden;color:var(--cream);padding:clamp(32px,5vw,64px) 0 clamp(52px,8vw,90px);background:var(--gradient-hero);min-height:calc(100svh - var(--nav-total))}
 .hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-gap-lg);align-items:center}
 .hero .eyebrow{color:var(--gold)}
-.hero h1{font-size:clamp(2.5rem,6.6vw,5.4rem);font-weight:600;line-height:.98;color:var(--cream);text-transform:uppercase;letter-spacing:.01em}
+.hero h1{font-size:clamp(3rem,7vw,6.2rem);font-weight:600;line-height:.92;color:var(--cream);text-transform:none;letter-spacing:.01em}
 .hero h1 small{display:block;font-size:.36em;letter-spacing:.2em;color:var(--sand);font-weight:500;margin-bottom:.6em}
 .hero p.lead{color:var(--sand);margin:clamp(1rem,2.4vw,1.4rem) 0 clamp(1.3rem,3vw,2rem)}
 .hero .actions{display:flex;gap:12px;flex-wrap:wrap}
@@ -523,7 +523,7 @@ svg.bloom .bsway{transform-origin:0 0;animation:bloom-sway 7s ease-in-out .5s in
 body{font-weight:400}
 h1,h2,h3,h4{font-weight:600}
 .eyebrow{font-weight:500;letter-spacing:1.5px}
-.hero h1,.prof-hero h1,.plan-hero h1{font-family:var(--sans)}
+.hero h1,.prof-hero h1,.plan-hero h1{font-family:var(--serif)}
 .detail .def,.owof .serif{font-family:var(--serif)}
 .lead,.hero p.lead{font-weight:300}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
@@ -639,6 +639,12 @@ html.reveal-ready [data-reveal]:not(.is-visible){opacity:0;transform:translateY(
 }
 @media (max-width:639px){.test-mode-picker{grid-template-columns:1fr}}
 @media (max-width:639px){.test-version-picker{grid-template-columns:1fr}.test-version-picker>button{min-height:118px}}
+/* Preserve source casing everywhere; use Jost for interface text and Cormorant for display text. */
+*{text-transform:none!important}
+h1,h2,h3,h4,.hero h1,.prof-hero h1,.plan-hero h1,.state h1,.modal-head h2,.intro-card h1{font-family:var(--serif)!important}
+body,.nav nav a,.btn,.field input,.field select,.field textarea,.nav-language-btn,.nav-login-btn{font-family:var(--sans)}
+.brand{font-family:var(--serif)!important;letter-spacing:.01em;text-transform:none!important}
+.eyebrow,.field label,.detail .tag,.detail .fc,.prof-hero .lvl,.strong .fc,.vcard .badge,.vcard h3 small,.vcard .lv,.sumtable th,.report-label,.history-date{letter-spacing:.04em!important;text-transform:none!important}
 @page{size:A4 portrait;margin:12mm}
 @media print{
   html,body,#root{width:auto!important;min-width:0!important;margin:0!important;background:#FFFFFF!important}
