@@ -1,8 +1,22 @@
 /* self-hosted fonts (latin subset, swap) */
 @font-face{font-family:"Jost";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/jost-latin-wght-normal.woff2") format("woff2")}
+@font-face{font-family:"Jost";font-style:italic;font-weight:100 900;font-display:swap;src:url("../fonts/jost-latin-wght-italic.woff2") format("woff2")}
 @font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:500;font-display:swap;src:url("../fonts/cormorant-garamond-latin-500-normal.woff2") format("woff2")}
 @font-face{font-family:"Cormorant Garamond";font-style:normal;font-weight:600;font-display:swap;src:url("../fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2")}
 @font-face{font-family:"Cormorant Garamond";font-style:italic;font-weight:500;font-display:swap;src:url("../fonts/cormorant-garamond-latin-500-italic.woff2") format("woff2")}
+@font-face{font-family:"CG Swash Q";font-style:normal;font-weight:600;font-display:swap;src:url("../fonts/CGSwashQ-600.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Devanagari";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-devanagari-devanagari-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Devanagari";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-devanagari-devanagari-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Telugu";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-telugu-telugu-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Telugu";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-telugu-telugu-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Tamil";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-tamil-tamil-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Tamil";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-tamil-tamil-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Kannada";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-kannada-kannada-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Kannada";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-kannada-kannada-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Malayalam";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-malayalam-malayalam-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Malayalam";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-malayalam-malayalam-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:400 700;font-display:swap;src:url("../fonts/noto-sans-bengali-bengali-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:700;font-display:swap;src:url("../fonts/noto-sans-bengali-bengali-700-normal.woff2") format("woff2")}
 /* Humane Quotient — palette: #FFFDE9 #E4D5CB #D5BDAF #A27C3F #E0AC27 #C97F1C #A8450F #850500 #470500 */
 :root{--ease:cubic-bezier(.22,1,.36,1);
   --cream:#FFFDE9; --sand:#E4D5CB; --tan:#D5BDAF; --bronze:#A27C3F; --gold:#E0AC27;
