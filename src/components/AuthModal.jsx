@@ -13,6 +13,7 @@ export function AuthModal() {
   if (!authModal.isOpen) return null;
 
   const mode = authModal.mode;
+  const submitLabel = mode === 'register' ? 'Create Account' : 'Sign In';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -50,13 +51,13 @@ export function AuthModal() {
 
   return (
     <div className="modal-backdrop" onClick={closeAuthModal}>
-      <div ref={dialogRef} className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabIndex={-1}>
+      <div ref={dialogRef} className="modal-card auth-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabIndex={-1}>
         <button className="modal-close" onClick={closeAuthModal} aria-label="Close modal">
           ×
         </button>
 
         <div className="modal-head">
-          <img src="/img/huq-mark.webp" width="48" height="48" alt="HuQ" style={{ display: 'block', margin: '0 auto 12px' }} />
+          <img className="auth-logo" src="/img/huq-mark.webp" width="48" height="48" alt="HuQ" style={{ display: 'block', margin: '0 auto 12px' }} />
           <h2>
             {mode === 'register' && 'Create Your Account'}
             {mode !== 'register' && 'Welcome Back'}
@@ -131,7 +132,7 @@ export function AuthModal() {
           </div>
 
           <button className="btn primary" type="submit" disabled={submitting} style={{ width: '100%', marginTop: '12px' }}>
-            {submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In'}
+            {submitting ? 'Please wait…' : submitLabel}
           </button>
         </form>
 

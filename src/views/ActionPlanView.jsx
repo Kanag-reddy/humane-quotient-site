@@ -85,12 +85,12 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
   ];
 
   return (
-    <>
-      <section className="plan-hero">
+    <div className="action-plan-page">
+      <section className="plan-hero huq-hero--art">
         <PetalsBackground />
         <div className="wrap">
-          <span className="eyebrow">Action plan</span>
-          <h1>Grow your Humane Quotient</h1>
+          <span className="eyebrow huq-eyebrow huq-eyebrow--pill">Action plan</span>
+          <h1 className="huq-hero-title">Grow your Humane Quotient</h1>
           <p>
             Use your strongest humane value as the foundation for growing the others. Your steps below are ordered so the values with the most room to grow come first.
           </p>
@@ -114,6 +114,7 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
         </div>
       </div>
 
+      <div className="huq-divider" aria-hidden="true"></div>
       <section style={{ paddingTop: '44px' }}>
         <div className="wrap">
           <div>
@@ -196,6 +197,6 @@ export function ActionPlanView({ onBackProfile, onRetake }) {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

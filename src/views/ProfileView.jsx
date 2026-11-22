@@ -148,12 +148,12 @@ export function ProfileView({ onGoPlan, onRetake }) {
 
   return (
     <div className="profile-report-page">
-      <section className="prof-hero">
+      <section className="prof-hero huq-hero--art">
         <PetalsBackground />
 
         <div className="wrap">
-          <span className="eyebrow">Your Humane Quotient Profile</span>
-          <h1>{displayName === 'Your' ? 'Your HuQ' : `${displayName}’s HuQ`}</h1>
+          <span className="eyebrow huq-eyebrow huq-eyebrow--pill">Your Humane Quotient Profile</span>
+          <h1 className="huq-hero-title">{displayName === 'Your' ? 'Your HuQ' : `${displayName}’s HuQ`}</h1>
 
           {!revealed ? (
             <div className="hx hx-wait">
@@ -270,6 +270,7 @@ export function ProfileView({ onGoPlan, onRetake }) {
       </div>
 
       {/* Extended Profile Content (Rendered upon reveal) */}
+      {revealed && <div className="huq-divider" aria-hidden="true"></div>}
       {revealed && (
         <section style={{ paddingTop: '36px' }}>
           <div className="wrap">

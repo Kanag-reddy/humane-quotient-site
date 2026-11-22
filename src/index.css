@@ -646,6 +646,131 @@ html.reveal-ready [data-reveal]:not(.is-visible){opacity:0;transform:translateY(
 .aspect-explanations{display:grid;gap:6px;margin:12px 0 0;padding:12px 0 0 18px;border-top:1px dashed var(--tan);color:var(--text-soft);font-size:.84rem;line-height:1.5}
 .aspect-explanations li{padding-left:2px}
 .print-report-note{margin:24px 0 0;padding-top:12px;border-top:1px solid var(--tan);color:var(--text-soft);font-size:.82rem}
+
+/* HuQ report pages: keep the current layout while carrying the refined glass-card treatment. */
+.profile-report-page .personal-report,
+.profile-report-page .big-card,
+.profile-report-page .vcard,
+.profile-report-page .chars .card{
+  border-color:var(--tan);
+  border-radius:28px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 18px 48px rgba(71,5,0,.07);
+}
+.profile-report-page .personal-report,
+.profile-report-page .big-card,
+.profile-report-page .report-card,
+.profile-report-page .score-narrative,
+.profile-report-page .aspect-insight{
+  backdrop-filter:blur(var(--glass-light-blur));
+  -webkit-backdrop-filter:blur(var(--glass-light-blur));
+}
+.profile-report-page .report-card{
+  border-color:var(--tan);
+  border-radius:18px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 8px 24px rgba(71,5,0,.06);
+}
+.profile-report-page .vcard{
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease);
+}
+@media (hover:hover) and (pointer:fine){
+  .profile-report-page .vcard:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 40px rgba(71,5,0,.14);
+  }
+}
+
+/* Action plan: layered cards and value-coloured steps without changing their order or content. */
+.action-plan-page .plan-hero{position:relative;overflow:hidden;background:var(--gradient-hero)}
+.action-plan-page .plan-hero .wrap{position:relative;z-index:2}
+.action-plan-page .lev-card{
+  border:2px solid var(--gold);
+  border-radius:28px;
+  background:var(--glass-light-bg);
+  backdrop-filter:blur(var(--glass-light-blur));
+  -webkit-backdrop-filter:blur(var(--glass-light-blur));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 18px 48px rgba(71,5,0,.1);
+}
+.action-plan-page .tip{
+  border-color:var(--tan);
+  border-left:3px solid var(--level-accent,var(--tan));
+  border-radius:var(--radius-card);
+  background:var(--glass-light-bg);
+  backdrop-filter:blur(var(--glass-light-blur));
+  -webkit-backdrop-filter:blur(var(--glass-light-blur));
+  box-shadow:var(--shadow-card);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease);
+}
+.action-plan-page .tip.focus{
+  border:2px solid var(--amber);
+  background:linear-gradient(90deg,rgba(224,172,39,.12),var(--glass-light-bg) 40%);
+}
+.action-plan-page .tip .ic{background:var(--amber);border-color:var(--amber)}
+.action-plan-page .ladder .card{
+  border-top:3px solid var(--level-accent,var(--sand));
+}
+.action-plan-page .ladder .card.cur{
+  border:2px solid var(--level-accent,var(--crimson));
+  box-shadow:var(--shadow-card);
+}
+@media (hover:hover) and (pointer:fine){
+  .action-plan-page .lev-card,
+  .action-plan-page .tip,
+  .action-plan-page .ladder .card{
+    transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+  }
+  .action-plan-page .lev-card:hover,
+  .action-plan-page .tip:hover,
+  .action-plan-page .ladder .card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 40px rgba(71,5,0,.14);
+  }
+}
+
+/* Sign-in and registration retain their existing flow and controls. */
+.auth-modal{
+  max-height:calc(100dvh - 32px);
+  overflow:auto;
+  border-color:var(--tan);
+  border-radius:28px;
+  background:var(--glass-light-bg);
+  backdrop-filter:blur(var(--glass-light-blur));
+  -webkit-backdrop-filter:blur(var(--glass-light-blur));
+  box-shadow:0 24px 60px rgba(71,5,0,.28);
+}
+.auth-modal::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:4px;
+  background:linear-gradient(90deg,var(--gold),var(--rust),var(--crimson));
+  pointer-events:none;
+}
+.auth-modal .auth-logo{
+  width:58px;
+  height:58px;
+  padding:5px;
+  border:1px solid var(--tan);
+  border-radius:50%;
+  background:var(--cream);
+  box-shadow:0 0 0 4px rgba(224,172,39,.16);
+}
+.auth-modal .modal-tabs{border:1px solid var(--tan);background:rgba(228,213,203,.45)}
+.auth-modal .modal-tab.active{background:var(--cream);box-shadow:var(--shadow-card)}
+.auth-modal .modal-form input{
+  min-height:46px;
+  border-color:var(--tan);
+  border-radius:12px;
+  background:var(--cream);
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
+.auth-modal .modal-form input:focus{
+  border-color:var(--bronze);
+  outline:0;
+  box-shadow:0 0 0 3px rgba(224,172,39,.2);
+}
+
 @media (max-width:639px){
   .report-grid{grid-template-columns:minmax(0,1fr)}
   .sumtable{display:block}

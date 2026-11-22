@@ -124,11 +124,11 @@ function AppContent() {
   }, [setPhase, setStep]);
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout${displayRoute !== 'home' ? ' huq-type' : ''}`}>
       <Navbar currentRoute={currentRoute} setCurrentRoute={navigateTo} />
 
       <main id="app" tabIndex={-1}>
-        <div className={`route-view ${transitionState}`} aria-live={transitionState === 'enter' ? 'polite' : undefined}>
+        <div className={`route-view ${transitionState}${displayRoute === 'home' ? ' huq-sections' : ''}`} aria-live={transitionState === 'enter' ? 'polite' : undefined}>
         <Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>
         {displayRoute === 'home' && (
           <HomeView
@@ -186,8 +186,11 @@ function AppContent() {
         </div>
       </main>
 
-      <footer className="foot">
-        <p className="one-line">
+      <footer className="foot huq-footer huq-footer--keep-spacing">
+        <img className="huq-footer__mark" src="/huq-design/img/logo-flower.webp" width="46" height="46" alt="" />
+        <p className="huq-footer__title">Humane <b>Quotient</b></p>
+        <div className="huq-footer__orn" aria-hidden="true"><i></i><u></u><i></i></div>
+        <p className="one-line huq-footer__line">
           Based on the book <em>Test Your Humane Quotient</em> (First Edition, Revised) by Dr Rachiraju Sai Krishna &amp; Prof Dr Thothathri Venugopal.
         </p>
         <p>© 2026 Sri Sathya Sai University for Human Excellence.</p>

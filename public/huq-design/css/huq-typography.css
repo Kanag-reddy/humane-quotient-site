@@ -1,0 +1,43 @@
+/* =====================================================================================================
+   HuQ typography  ·  huq-typography.css          (needs huq-fonts.css)
+   THE FONT STYLE OF THE HuQ SITE, in one switch: add  class="huq-type"  to <body>  (or to any wrapper).
+     · running text .......... Jost, regular, lining numerals
+     · every heading h1-h6 .... Cormorant Garamond SemiBold, CAPITALS, very light tracking
+     · the long-tailed Q ...... switched on in every browser (the "calt" feature), so QUOTIENT is drawn as on the site
+     · Indian scripts ......... Noto Sans, no capitals, no tracking (as on the site)
+   WHAT IT DOES NOT TOUCH: sizes, line heights, margins, paddings, widths, colours, grids. The layout stays yours.
+   (Capitals and the Jost / Cormorant letter shapes are a little wider or narrower than your old fonts, so a few lines
+   may wrap differently. That is the font, not a layout change.)
+   To undo: remove the class from <body>.
+   ===================================================================================================== */
+
+.huq-type{
+  font-family:var(--huq-sans);
+  font-weight:400;
+  font-variant-numeric:lining-nums;
+  -webkit-font-smoothing:antialiased;
+  font-feature-settings:"calt" 1,"kern" 1;
+  font-variant-ligatures:common-ligatures contextual;
+}
+.huq-type :is(button,input,select,textarea,optgroup){font-family:inherit}
+
+/* headings */
+.huq-type :is(h1,h2,h3,h4,h5,h6){
+  font-family:var(--huq-serif);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.005em;
+  font-synthesis:none;
+  font-feature-settings:"calt" 1,"kern" 1;              /* Chrome / Edge / Firefox turn the long-tailed Q off when letters are spaced; this keeps it on */
+  font-variant-ligatures:common-ligatures contextual;
+}
+.huq-type :is(h3,h4) small{font-family:var(--huq-sans);text-transform:none;letter-spacing:.04em;font-weight:500}
+.huq-type .lead{font-weight:300}
+
+/* the long-tailed Q for text that is drawn letter by letter (PDF export, canvas, SVG text): <span class="huq-q">Q</span>uotient */
+.huq-q{font-family:"CG Swash Q","Cormorant Garamond",Georgia,serif;font-weight:600;font-synthesis:none}
+
+/* Indian scripts: no capitals, no tracking, a taller line, exactly as on the site */
+.huq-type:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)){line-height:1.8}
+.huq-type:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) :is(h1,h2,h3,h4,h5,h6){
+  text-transform:none;letter-spacing:normal;line-height:1.4;font-weight:600}

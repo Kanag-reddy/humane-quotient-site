@@ -1,0 +1,141 @@
+/* =====================================================================================================
+   HuQ design details  ·  huq-design.css          (needs huq-fonts.css; huq-typography.css is recommended)
+   The four design elements of the HuQ site, as separate, optional pieces. EVERY class starts with  huq-  so nothing
+   in your own CSS can be hit by accident, and nothing here positions or resizes your existing layout:
+
+     1. huq-ambient ........ the warm moving light behind the page (add to <body>)
+     2. huq-brand .......... the header lockup: flower logo + HUMANE QUOTIENT
+     3. huq-eyebrow / huq-hero-title / huq-hero--art ... the hero: pill, heading, red artwork
+     4. huq-divider ........ the flower between two sections (an element, or automatic with huq-sections)
+     5. huq-footer ......... the footer: logo in a ring, wordmark, diamond rule, credit lines
+
+   Colours are the 9 colours of the HuQ palette (variables below). Change them in ONE place if ever needed.
+   ===================================================================================================== */
+
+:root{
+  --huq-cream:#FFFDE9; --huq-sand:#E4D5CB; --huq-tan:#D5BDAF; --huq-bronze:#A27C3F; --huq-gold:#E0AC27;
+  --huq-amber:#C97F1C; --huq-rust:#A8450F; --huq-crimson:#850500; --huq-maroon:#470500;
+  --huq-hero-base:#A51926;                       /* the red of the hero band */
+  --huq-ease:cubic-bezier(.22,1,.36,1);
+  --huq-gutter:clamp(14px,3.2vw,40px);
+}
+
+/* ---------------------------------------------------------------------------------------------------
+   1. AMBIENT LIGHT  ·  <body class="huq-ambient">
+   A soft gold / amber / crimson glow that drifts slowly behind the page (not shown if the visitor prefers reduced motion).
+   --------------------------------------------------------------------------------------------------- */
+@media (prefers-reduced-motion:no-preference){
+  .huq-ambient::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(42% 36% at 18% 22%,rgba(224,172,39,.22),transparent 70%),
+               radial-gradient(38% 34% at 84% 72%,rgba(168,69,15,.14),transparent 70%),
+               radial-gradient(30% 28% at 62% 8%,rgba(133,5,0,.08),transparent 70%);
+    animation:huq-ambient 24s ease-in-out infinite alternate;will-change:transform}
+  @keyframes huq-ambient{from{transform:translate3d(-4%,-2%,0) scale(1)}to{transform:translate3d(4%,3%,0) scale(1.14)}}
+}
+
+/* ---------------------------------------------------------------------------------------------------
+   2. HEADER LOCKUP  ·  <a class="huq-brand"><img class="huq-brand__mark" …><span class="huq-brand__text">Humane <b>Quotient</b></span></a>
+   Put the classes on the logo link / image / name that are already in your header. No bar, height or position is set.
+   --------------------------------------------------------------------------------------------------- */
+.huq-brand{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;text-decoration:none;color:var(--huq-maroon);
+  font-family:var(--huq-serif);font-weight:600;font-size:clamp(1.02rem,.9rem + .55vw,1.32rem);letter-spacing:.1em;text-transform:uppercase}
+.huq-brand__mark{flex:none;display:block;width:36px;height:36px;max-width:100%;object-fit:contain;transition:transform .6s var(--huq-ease)}
+.huq-brand__text{font-family:var(--huq-serif);font-weight:600;font-size:1.18rem;line-height:1;letter-spacing:.1em;text-transform:uppercase;
+  font-synthesis:none;font-feature-settings:"calt" 1,"kern" 1;font-variant-ligatures:common-ligatures contextual}
+.huq-brand__text b{font-weight:600;color:var(--huq-crimson)}                  /* QUOTIENT in crimson, HUMANE in maroon */
+@media (hover:hover) and (pointer:fine){.huq-brand:hover .huq-brand__mark{transform:rotate(45deg)}}
+@media (prefers-reduced-motion:no-preference){
+  .huq-brand__mark{animation:huq-markIn 1.3s var(--huq-ease) both}
+  @keyframes huq-markIn{from{rotate:-120deg;scale:.3;opacity:0}to{rotate:0deg;scale:1;opacity:1}}
+}
+@media (max-width:640px){.huq-brand{font-size:1rem;letter-spacing:.08em}}
+@media (max-width:479px){
+  .huq-brand{gap:8px}
+  .huq-brand__text{font-size:.86rem;letter-spacing:.04em}
+  .huq-brand__mark{width:30px;height:30px}
+}
+@media (max-width:339px){
+  .huq-brand__text{font-size:.74rem;letter-spacing:.03em}
+  .huq-brand__mark{width:26px;height:26px}
+}
+/* Indian-script pages keep the wordmark in capitals with tracking, as on the site */
+:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-brand__text{text-transform:uppercase;letter-spacing:.1em;line-height:1.4}
+@media (max-width:479px){:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-brand__text{letter-spacing:.04em}}
+@media (max-width:339px){:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-brand__text{letter-spacing:.03em}}
+
+/* ---------------------------------------------------------------------------------------------------
+   3. HERO
+   3a. the small line with the gold stroke:      <span class="huq-eyebrow huq-eyebrow--pill">A self-reflection tool …</span>
+   3b. the heading:                              <h1 class="huq-hero-title"><small>Test your</small>Humane<br>Quotient</h1>
+   3c. the red artwork (optional):               add  huq-hero--art  to your hero section
+   No margin is set on the pill or the heading: your spacing stays as it is.
+   --------------------------------------------------------------------------------------------------- */
+.huq-eyebrow{display:inline-flex;align-items:center;gap:.8em;font-family:var(--huq-sans);font-size:.78rem;font-weight:600;line-height:1.65;
+  letter-spacing:.26em;text-transform:uppercase;color:var(--huq-bronze)}
+.huq-eyebrow::before{content:"";flex:none;width:26px;height:1.5px;background:linear-gradient(90deg,transparent,var(--huq-gold))}
+@media (prefers-reduced-motion:no-preference){
+  .huq-eyebrow::before{transform-origin:0 50%;animation:huq-lineGrow .9s var(--huq-ease) .3s backwards}
+  @keyframes huq-lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.huq-eyebrow--pill{padding:8px 18px;border-radius:100px;font-size:.74rem;color:var(--huq-cream);
+  background:rgba(255,253,233,.14);border:1px solid rgba(255,253,233,.14)}
+
+.huq-hero-title{font-family:var(--huq-serif);font-size:clamp(2.5rem,6.6vw,5.4rem);font-weight:600;line-height:.98;letter-spacing:.005em;
+  text-transform:uppercase;color:var(--huq-cream);font-synthesis:none;font-feature-settings:"calt" 1,"kern" 1;font-variant-ligatures:common-ligatures contextual}
+.huq-hero-title small{display:block;font-family:inherit;font-size:.36em;font-weight:500;letter-spacing:.2em;color:var(--huq-sand);margin-bottom:.6em;text-transform:uppercase}
+@media (prefers-reduced-motion:no-preference){
+  .huq-hero-title small{animation:huq-wordIn .8s var(--huq-ease) .05s both}
+  .huq-hero-title .w{display:inline-block;opacity:0;transform:translate3d(0,.5em,0);filter:blur(8px);
+    animation:huq-wordIn .85s var(--huq-ease) forwards;animation-delay:calc(.15s + var(--i,0) * .14s)}     /* needs js/huq-hero-words.js */
+  @keyframes huq-wordIn{from{opacity:0;transform:translate3d(0,.5em,0);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+}
+:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-hero-title{font-size:clamp(2.1rem,5.4vw,4.2rem);line-height:1.3;letter-spacing:normal;text-transform:none}
+:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-hero-title small{font-size:.4em;line-height:1.5;letter-spacing:normal;text-transform:none}
+:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-eyebrow{letter-spacing:normal;text-transform:none}
+
+/* the red artwork (vector, so it stays sharp): a background only, nothing is positioned or clipped */
+.huq-hero--art{color:var(--huq-cream);background:var(--huq-hero-base) url("../img/hero-bg-tall.svg") 50% 50%/cover no-repeat}
+@media (min-width:768px){.huq-hero--art{background-image:url("../img/hero-bg-wide.svg")}}
+
+/* ---------------------------------------------------------------------------------------------------
+   4. FLOWER DIVIDER  (the eight-petal flower between two lines)
+   a) one by hand:        <div class="huq-divider" aria-hidden="true"></div>
+   b) automatic:          <main class="huq-sections"> <section>…</section> <section>…</section> </main>
+                          puts the flower above every section except the first. Skip one with class "huq-no-divider".
+   It adds the flower's own height (28 px) and a small gap; nothing else moves.
+   --------------------------------------------------------------------------------------------------- */
+.huq-divider,
+.huq-sections > section + section:not(.huq-no-divider)::before{
+  content:"";display:block;width:140px;height:28px;margin:0 auto clamp(14px,2.4vw,28px);opacity:.9;
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%22-60 -12 120 24%22%3E%3Cpath d=%22M-58 0H-14M14 0H58%22 stroke=%22%23D5BDAF%22 stroke-width=%221.2%22/%3E%3Cg fill=%22%23850500%22%3E%3Cpath transform=%22rotate(0)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(45)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(90)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(135)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(180)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(225)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(270)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3Cpath transform=%22rotate(315)%22 d=%22M0 0C3.4-3.4 3.4-7.6 0-11C-3.4-7.6-3.4-3.4 0 0Z%22/%3E%3C/g%3E%3Ccircle r=%222%22 fill=%22%23FFFDE9%22/%3E%3C/svg%3E") center/contain no-repeat}
+
+/* ---------------------------------------------------------------------------------------------------
+   5. FOOTER
+   <footer class="huq-footer">
+     <img class="huq-footer__mark" src="img/logo-flower.webp" width="46" height="46" alt="">
+     <p class="huq-footer__title">Humane <b>Quotient</b></p>
+     <div class="huq-footer__orn" aria-hidden="true"><i></i><u></u><i></i></div>
+     <p class="huq-footer__line">Based on the book <em>Test Your Humane Quotient</em> …</p>
+     <p>© 2026 Sri Sathya Sai University for Human Excellence.</p>
+   </footer>
+   The footer sets its own padding. To keep the padding your footer already has, add the class  huq-footer--keep-spacing.
+   --------------------------------------------------------------------------------------------------- */
+.huq-footer{box-sizing:border-box;background:radial-gradient(120% 140% at 50% 0%,#5a0300 0%,var(--huq-maroon) 60%);color:var(--huq-tan);
+  font-family:var(--huq-sans);font-size:.88rem;line-height:1.65;text-align:center}
+.huq-footer:not(.huq-footer--keep-spacing){
+  padding:clamp(36px,5vw,56px) max(var(--huq-gutter),env(safe-area-inset-right)) calc(clamp(28px,4vw,38px) + env(safe-area-inset-bottom)) max(var(--huq-gutter),env(safe-area-inset-left))}
+.huq-footer p{max-width:78ch;margin:0 auto .6rem}
+.huq-footer__mark{box-sizing:border-box;display:block;width:46px;height:46px;max-width:100%;margin:0 auto 10px;padding:6px;border-radius:50%;
+  background:var(--huq-cream);box-shadow:0 0 0 4px rgba(224,172,39,.25)}
+@media (prefers-reduced-motion:no-preference){
+  .huq-footer__mark{animation:huq-spinSlow 50s linear infinite}
+  @keyframes huq-spinSlow{to{rotate:360deg}}
+}
+.huq-footer .huq-footer__title{font-family:var(--huq-serif);font-size:1.65rem;font-weight:600;line-height:1.65;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--huq-cream);margin:0 auto 12px;font-synthesis:none;font-feature-settings:"calt" 1,"kern" 1;font-variant-ligatures:common-ligatures contextual}
+.huq-footer .huq-footer__title b{font-weight:600;color:var(--huq-gold)}                  /* HUMANE in cream, QUOTIENT in gold */
+.huq-footer__orn{display:flex;align-items:center;gap:10px;max-width:220px;margin:0 auto 16px}
+.huq-footer__orn i{flex:1;height:1px;background:rgba(213,189,175,.4)}
+.huq-footer__orn u{flex:none;width:7px;height:7px;transform:rotate(45deg);background:var(--huq-gold);text-decoration:none}
+@media (min-width:1280px){.huq-footer p.huq-footer__line{max-width:none;white-space:nowrap}}
+:is(:lang(hi),:lang(mr),:lang(te),:lang(ta),:lang(kn),:lang(ml),:lang(bn),:lang(gu)) .huq-footer .huq-footer__title{text-transform:uppercase;letter-spacing:.16em;line-height:1.4}

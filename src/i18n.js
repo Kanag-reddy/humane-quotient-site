@@ -42,13 +42,21 @@ export function useLanguage() {
       if (node.nodeType === Node.ELEMENT_NODE && node.closest('[translate="no"]')) return;
       if (node.nodeType === Node.TEXT_NODE && node.parentElement?.closest('[translate="no"]')) return;
       if (node.nodeType === Node.TEXT_NODE) {
-        const original = records.get(node) || node.nodeValue;
-        if (!records.has(node)) records.set(node, original);
+        const current = node.nodeValue;
+        let record = records.get(node);
+        if (!record || current !== record.translated) {
+          record = { original: current, translated: current };
+          records.set(node, record);
+        }
+        const { original } = record;
         const leading = original.match(/^\s*/)[0];
         const trailing = original.match(/\s*$/)[0];
         const translated = translateText(normalize(original));
         const wanted = translated === normalize(original) ? original : leading + translated + trailing;
-        if (node.nodeValue !== wanted) node.nodeValue = wanted;
+        if (current !== wanted) {
+          record.translated = wanted;
+          node.nodeValue = wanted;
+        }
         return;
       }
       if (node.nodeType !== Node.ELEMENT_NODE) return;

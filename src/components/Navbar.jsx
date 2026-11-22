@@ -34,7 +34,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
   return (
     <header className={`nav ${mobileOpen ? 'open' : ''}`} id="nav">
       <a
-        className="brand"
+        className="brand huq-brand"
         href="#/"
         onClick={(e) => {
           e.preventDefault();
@@ -43,6 +43,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
         aria-label="Humane Quotient home"
       >
         <img
+          className="huq-brand__mark"
           src="/img/huq-mark.webp"
           width="34"
           height="34"
@@ -50,7 +51,7 @@ export function Navbar({ currentRoute, setCurrentRoute }) {
           aria-hidden="true"
           id="brandMark"
         />
-        <span>
+        <span className="huq-brand__text">
           Humane <b>Quotient</b>
         </span>
       </a>
