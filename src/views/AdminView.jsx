@@ -3,6 +3,16 @@ import { useAuth } from '../context/AuthContext';
 import { values, levels } from '../data/huqData';
 import { ShieldIcon, SearchIcon, DownloadIcon, ValueIcon, UserIcon } from '../components/Icons';
 
+const ALL_SUBMISSION_COLUMNS = [
+  { key: 'name', label: 'Respondent' },
+  { key: 'email', label: 'Email' },
+  { key: 'organization', label: 'Organization' },
+  { key: 'huq', label: 'HuQ Score' },
+  { key: 'careLevel', label: 'Care Level' },
+  { key: 'version', label: 'Test Type' },
+  { key: 'createdAt', label: 'Submitted' }
+];
+
 export function AdminView() {
   const { token, isAdmin, openAuthModal } = useAuth();
   const [stats, setStats] = useState(null);
@@ -10,12 +20,33 @@ export function AdminView() {
   const [error, setError] = useState('');
 
   // User search state
-  const [searchEmail, setSearchEmail] = useState('');
+  const [searchFilters, setSearchFilters] = useState({
+    name: '',
+    email: '',
+    organization: '',
+    role: '',
+    age: '',
+    gender: '',
+    qualification: '',
+    course: '',
+    submissionId: '',
+    version: '',
+    careLevel: '',
+    minHuq: '',
+    maxHuq: ''
+  });
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState('');
   const [expandedSubId, setExpandedSubId] = useState(null);
   const [activeSubmissionTab, setActiveSubmissionTab] = useState('full');
+  const [submissionListTab, setSubmissionListTab] = useState('recent');
+  const [allSubmissions, setAllSubmissions] = useState([]);
+  const [allSubmissionsPage, setAllSubmissionsPage] = useState(1);
+  const [allSubmissionsPagination, setAllSubmissionsPagination] = useState(null);
+  const [allSubmissionsLoading, setAllSubmissionsLoading] = useState(false);
+  const [allSubmissionsError, setAllSubmissionsError] = useState('');
+  const [allSubmissionsSort, setAllSubmissionsSort] = useState({ key: 'createdAt', direction: 'desc' });
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -42,16 +73,64 @@ export function AdminView() {
     fetchOverview();
   }, [isAdmin, token]);
 
+  useEffect(() => {
+    if (!isAdmin || submissionListTab !== 'all') return undefined;
+
+    const controller = new AbortController();
+    async function fetchAllSubmissions() {
+      setAllSubmissionsLoading(true);
+      setAllSubmissionsError('');
+      setAllSubmissions([]);
+      setAllSubmissionsPagination(null);
+      const params = new URLSearchParams({
+        page: String(allSubmissionsPage),
+        limit: '50',
+        sortBy: allSubmissionsSort.key,
+        sortOrder: allSubmissionsSort.direction
+      });
+
+      try {
+        const res = await fetch(`/api/admin/submissions?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          setAllSubmissionsError(data.error || 'Failed to load all submissions.');
+          return;
+        }
+        setAllSubmissions(data.data.submissions);
+        setAllSubmissionsPagination(data.data.pagination);
+      } catch (err) {
+        if (err.name !== 'AbortError') setAllSubmissionsError('Network error loading submissions.');
+      } finally {
+        if (!controller.signal.aborted) setAllSubmissionsLoading(false);
+      }
+    }
+
+    fetchAllSubmissions();
+    return () => controller.abort();
+  }, [allSubmissionsPage, allSubmissionsSort, isAdmin, submissionListTab, token]);
+
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchEmail.trim()) return;
+    const params = new URLSearchParams();
+    Object.entries(searchFilters).forEach(([key, value]) => {
+      if (value.trim()) params.set(key, value.trim());
+    });
+    if (Object.values(searchFilters).every((value) => !value.trim())) {
+      setSearchError('Enter at least one search filter.');
+      setSearchResult(null);
+      return;
+    }
 
     setSearchLoading(true);
     setSearchError('');
     setSearchResult(null);
+    setExpandedSubId(null);
 
     try {
-      const res = await fetch(`/api/admin/user-data?email=${encodeURIComponent(searchEmail.trim())}`, {
+      const res = await fetch(`/api/admin/user-data?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -66,6 +145,27 @@ export function AdminView() {
     } finally {
       setSearchLoading(false);
     }
+  };
+
+  const handleSearchFilterChange = (e) => {
+    const { name, value } = e.target;
+    setSearchFilters((current) => ({ ...current, [name]: value }));
+  };
+
+  const clearSearch = () => {
+    setSearchFilters((current) => Object.fromEntries(
+      Object.keys(current).map((key) => [key, ''])
+    ));
+    setSearchResult(null);
+    setSearchError('');
+  };
+
+  const handleSubmissionSort = (key) => {
+    setAllSubmissionsSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+    setAllSubmissionsPage(1);
   };
 
   const handleDownloadExcel = async () => {
@@ -196,28 +296,88 @@ export function AdminView() {
               </div>
             </div>
 
-            {/* User Submission Email Query Tool */}
+            {/* User Submission Search Tool */}
             <div className="big-card" style={{ marginTop: '36px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <SearchIcon size={24} />
-                <h2 style={{ margin: 0 }}>Query User Submissions by Email</h2>
+                <h2 style={{ margin: 0 }}>Search User Submissions</h2>
               </div>
               <p style={{ color: '#6b3a33', margin: '8px 0 20px' }}>
-                Search for any user to inspect all their test attempts, recorded scores, quotient levels, and demographic details.
+                Use one or more details to find matching test attempts. Text fields match partial values.
               </p>
 
-              <form onSubmit={handleSearch} className="admin-search-form">
-                <input
-                  type="email"
-                  required
-                  placeholder="Enter email address (e.g. user@example.com)..."
-                  value={searchEmail}
-                  onChange={(e) => setSearchEmail(e.target.value)}
-                  className="admin-search-input"
-                />
-                <button className="btn primary" type="submit" disabled={searchLoading}>
-                  {searchLoading ? 'Searching…' : 'Find Submissions'}
-                </button>
+              <form onSubmit={handleSearch}>
+                <div className="admin-search-grid">
+                  <label>
+                    <span>Name</span>
+                    <input name="name" value={searchFilters.name} onChange={handleSearchFilterChange} placeholder="Participant name" />
+                  </label>
+                  <label>
+                    <span>Email</span>
+                    <input name="email" value={searchFilters.email} onChange={handleSearchFilterChange} placeholder="Email address" />
+                  </label>
+                  <label>
+                    <span>Organization</span>
+                    <input name="organization" value={searchFilters.organization} onChange={handleSearchFilterChange} placeholder="Organization or institution" />
+                  </label>
+                  <label>
+                    <span>Role</span>
+                    <input name="role" value={searchFilters.role} onChange={handleSearchFilterChange} placeholder="Participant role" />
+                  </label>
+                  <label>
+                    <span>Age group</span>
+                    <input name="age" value={searchFilters.age} onChange={handleSearchFilterChange} placeholder="e.g. 18–24" />
+                  </label>
+                  <label>
+                    <span>Gender</span>
+                    <input name="gender" value={searchFilters.gender} onChange={handleSearchFilterChange} placeholder="Gender" />
+                  </label>
+                  <label>
+                    <span>Qualification</span>
+                    <input name="qualification" value={searchFilters.qualification} onChange={handleSearchFilterChange} placeholder="Qualification" />
+                  </label>
+                  <label>
+                    <span>Course</span>
+                    <input name="course" value={searchFilters.course} onChange={handleSearchFilterChange} placeholder="Course or program" />
+                  </label>
+                  <label>
+                    <span>Submission ID</span>
+                    <input name="submissionId" value={searchFilters.submissionId} onChange={handleSearchFilterChange} placeholder="Submission ID" />
+                  </label>
+                  <label>
+                    <span>Test type</span>
+                    <select name="version" value={searchFilters.version} onChange={handleSearchFilterChange}>
+                      <option value="">All test types</option>
+                      <option value="full">Full test</option>
+                      <option value="quick">Quick test</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Care level</span>
+                    <select name="careLevel" value={searchFilters.careLevel} onChange={handleSearchFilterChange}>
+                      <option value="">All care levels</option>
+                      <option value="0">Self-Care</option>
+                      <option value="1">Socio-Care</option>
+                      <option value="2">Universal Care</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>HuQ minimum</span>
+                    <input type="number" name="minHuq" min="0" max="10" step="0.1" value={searchFilters.minHuq} onChange={handleSearchFilterChange} placeholder="0" />
+                  </label>
+                  <label>
+                    <span>HuQ maximum</span>
+                    <input type="number" name="maxHuq" min="0" max="10" step="0.1" value={searchFilters.maxHuq} onChange={handleSearchFilterChange} placeholder="10" />
+                  </label>
+                </div>
+                <div className="admin-search-actions">
+                  <button className="btn primary" type="submit" disabled={searchLoading}>
+                    {searchLoading ? 'Searching…' : 'Find Submissions'}
+                  </button>
+                  <button className="btn ghost" type="button" onClick={clearSearch} disabled={searchLoading}>
+                    Clear
+                  </button>
+                </div>
               </form>
 
               {searchError && (
@@ -230,24 +390,37 @@ export function AdminView() {
                 <div className="admin-search-results" style={{ marginTop: '24px' }}>
                   <div className="admin-user-summary-card">
                     <div>
-                      <span className="eyebrow" style={{ marginBottom: '4px' }}>Participant Profile</span>
-                      <h3 style={{ margin: 0 }}>{searchResult.email}</h3>
-                      <p style={{ margin: '4px 0 0', fontSize: '0.92rem' }}>
-                        Status: <b>{searchResult.isRegistered ? 'Registered User' : 'Guest Submitter'}</b>
-                        {searchResult.user && ` · Name: ${searchResult.user.name} · Joined: ${new Date(searchResult.user.createdAt).toLocaleDateString()}`}
-                      </p>
+                      <span className="eyebrow" style={{ marginBottom: '4px' }}>
+                        {searchResult.email ? 'Participant Profile' : 'Matching Submissions'}
+                      </span>
+                      {searchResult.email ? (
+                        <>
+                          <h3 style={{ margin: 0 }}>{searchResult.email}</h3>
+                          <p style={{ margin: '4px 0 0', fontSize: '0.92rem' }}>
+                            Status: <b>{searchResult.isRegistered ? 'Registered User' : 'Guest Submitter'}</b>
+                            {searchResult.user && ` · Name: ${searchResult.user.name} · Joined: ${new Date(searchResult.user.createdAt).toLocaleDateString()}`}
+                          </p>
+                        </>
+                      ) : (
+                        <h3 style={{ margin: 0 }}>
+                          {new Set(searchResult.submissions.map((submission) => submission.email)).size} matching profile(s)
+                        </h3>
+                      )}
                     </div>
                     <span className="chip" style={{ background: 'var(--crimson)', color: 'var(--cream)' }}>
-                      {searchResult.submissions.length} Total Test{searchResult.submissions.length !== 1 ? 's' : ''}
+                      {searchResult.totalMatches} matching test{searchResult.totalMatches !== 1 ? 's' : ''}
                     </span>
                   </div>
 
                   {searchResult.submissions.length === 0 ? (
                     <p style={{ marginTop: '16px', color: 'var(--bronze)' }}>
-                      No test submissions found for this email address.
+                      No test submissions match these search filters.
                     </p>
                   ) : (
                     <div className="admin-submissions-list" style={{ marginTop: '18px' }}>
+                      {searchResult.truncated && (
+                        <p role="status">Showing the newest {searchResult.submissions.length} of {searchResult.totalMatches} matches. Add filters to narrow your search.</p>
+                      )}
                       {(() => {
                         const fullSubmissions = searchResult.submissions.filter((sub) => (sub.version || 'full') === 'full');
                         const quickSubmissions = searchResult.submissions.filter((sub) => sub.version === 'quick');
@@ -279,6 +452,9 @@ export function AdminView() {
                                   <b>{sub.name}</b>
                                   <span className="history-version-chip">{(sub.version || 'full') === 'quick' ? 'Quick / Beta' : 'Full'}</span>
                                   <span style={{ color: 'var(--bronze)', fontSize: '0.85rem' }}>({dateStr})</span>
+                                </div>
+                                <div style={{ color: 'var(--bronze)', fontSize: '0.85rem', marginTop: '2px' }}>
+                                  {sub.email} · {sub.demographics?.organization || 'Organization not provided'}
                                 </div>
                                 <div style={{ fontSize: '0.9rem', marginTop: '2px' }}>
                                   ID: <code>{sub.submissionId}</code> · HuQ: <b>{(Math.round((sc.huq || 0) * 10) / 10).toFixed(1)}/10</b> ({sc.total}/480) · Care Level: <b>{levels[sc.level]?.name || 'N/A'}</b>
@@ -331,37 +507,148 @@ export function AdminView() {
               )}
             </div>
 
-            {/* Recent Submissions Table */}
+            {/* Recent and searchable all-submissions tables */}
             <div className="big-card" style={{ marginTop: '36px' }}>
-              <h2>Recent Submissions</h2>
-              <table className="sumtable">
-                <thead>
-                  <tr>
-                    <th>Respondent</th>
-                    <th>Email</th>
-                    <th>HuQ Score</th>
-                    <th>Care Level</th>
-                    <th>Type</th>
-                    <th>Submitted</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentSubmissions.map((s) => (
-                    <tr key={s.id}>
-                      <td><b>{s.name}</b></td>
-                      <td>{s.email}</td>
-                      <td><b>{s.huq}/10</b></td>
-                      <td>{s.careLevel}</td>
-                      <td>
-                        <span className={`chip ${s.isGuest ? 'guest' : 'user'}`}>
-                          {s.isGuest ? 'Guest' : 'User'}
-                        </span>
-                      </td>
-                      <td>{new Date(s.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <h2>Submissions</h2>
+              <div className="history-tabs admin-submission-tabs" role="tablist" aria-label="Submission lists">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={submissionListTab === 'recent'}
+                  className={submissionListTab === 'recent' ? 'active' : ''}
+                  onClick={() => setSubmissionListTab('recent')}
+                >
+                  Recent Submissions <span>{stats.recentSubmissions.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={submissionListTab === 'all'}
+                  className={submissionListTab === 'all' ? 'active' : ''}
+                  onClick={() => setSubmissionListTab('all')}
+                >
+                  All Submissions <span>{stats.totalSubmissions}</span>
+                </button>
+              </div>
+
+              {submissionListTab === 'recent' ? (
+                <div className="admin-submissions-table-wrap">
+                  <table className="sumtable admin-submissions-table">
+                    <thead>
+                      <tr>
+                        <th>Respondent</th>
+                        <th>Email</th>
+                        <th>HuQ Score</th>
+                        <th>Care Level</th>
+                        <th>Type</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.recentSubmissions.map((s) => (
+                        <tr key={s.id}>
+                          <td data-label="Respondent"><b>{s.name}</b></td>
+                          <td data-label="Email">{s.email}</td>
+                          <td data-label="HuQ Score"><b>{s.huq}/10</b></td>
+                          <td data-label="Care Level">{s.careLevel}</td>
+                          <td data-label="Type">
+                            <span className={`chip ${s.isGuest ? 'guest' : 'user'}`}>
+                              {s.isGuest ? 'Guest' : 'User'}
+                            </span>
+                          </td>
+                          <td data-label="Submitted">{new Date(s.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <>
+                  {allSubmissionsError && <div className="modal-err" role="alert">{allSubmissionsError}</div>}
+                  {allSubmissionsLoading ? (
+                    <p role="status">Loading submissions…</p>
+                  ) : allSubmissionsError ? null : allSubmissions.length === 0 ? (
+                    <p>No submissions to display.</p>
+                  ) : (
+                    <div className="admin-submissions-table-wrap">
+                      <table className="sumtable admin-submissions-table">
+                        <thead>
+                          <tr>
+                            {ALL_SUBMISSION_COLUMNS.map((column) => {
+                              const isSorted = allSubmissionsSort.key === column.key;
+                              const nextDirection = isSorted && allSubmissionsSort.direction === 'asc' ? 'desc' : 'asc';
+                              return (
+                                <th
+                                  key={column.key}
+                                  scope="col"
+                                  aria-sort={isSorted ? (allSubmissionsSort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+                                >
+                                  <button
+                                    type="button"
+                                    className="admin-sort-button"
+                                    aria-label={`Sort by ${column.label} ${nextDirection === 'asc' ? 'ascending' : 'descending'}`}
+                                    onClick={() => handleSubmissionSort(column.key)}
+                                  >
+                                    {column.label}
+                                    <span aria-hidden="true">{isSorted ? (allSubmissionsSort.direction === 'asc' ? ' ▲' : ' ▼') : ''}</span>
+                                  </button>
+                                </th>
+                              );
+                            })}
+                            <th scope="col">Account</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allSubmissions.map((submission) => (
+                            <tr key={submission.id}>
+                              <td data-label="Respondent"><b>{submission.name}</b></td>
+                              <td data-label="Email">{submission.email}</td>
+                              <td data-label="Organization">{submission.organization || '—'}</td>
+                              <td data-label="HuQ Score"><b>{submission.huq}/10</b></td>
+                              <td data-label="Care Level">{submission.careLevel}</td>
+                              <td data-label="Test Type">{submission.version === 'quick' ? 'Quick / Beta' : 'Full'}</td>
+                              <td data-label="Submitted">{new Date(submission.createdAt).toLocaleString()}</td>
+                              <td data-label="Account">
+                                <span className={`chip ${submission.isGuest ? 'guest' : 'user'}`}>
+                                  {submission.isGuest ? 'Guest' : 'User'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {allSubmissionsPagination?.total > 0 && (
+                    <div className="admin-submissions-pagination">
+                      <span>
+                        Showing {(allSubmissionsPage - 1) * allSubmissionsPagination.limit + (allSubmissions.length ? 1 : 0)}
+                        –{(allSubmissionsPage - 1) * allSubmissionsPagination.limit + allSubmissions.length}
+                        {' '}of {allSubmissionsPagination.total}
+                      </span>
+                      <div>
+                        <button
+                          className="btn ghost"
+                          type="button"
+                          disabled={allSubmissionsLoading || allSubmissionsPage <= 1}
+                          onClick={() => setAllSubmissionsPage((page) => page - 1)}
+                        >
+                          Previous
+                        </button>
+                        <span>Page {allSubmissionsPage} of {Math.max(allSubmissionsPagination.totalPages, 1)}</span>
+                        <button
+                          className="btn ghost"
+                          type="button"
+                          disabled={allSubmissionsLoading || allSubmissionsPage >= allSubmissionsPagination.totalPages}
+                          onClick={() => setAllSubmissionsPage((page) => page + 1)}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </>
         ) : null}

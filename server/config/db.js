@@ -68,6 +68,29 @@ const db = {
     return Submission.find({ email: String(email).toLowerCase() }).sort({ createdAt: -1 });
   },
 
+  async searchSubmissions(query, limit = 200) {
+    await connectDB();
+    const [submissions, total] = await Promise.all([
+      Submission.find(query).sort({ createdAt: -1 }).limit(limit).lean(),
+      Submission.countDocuments(query)
+    ]);
+    return { submissions, total };
+  },
+
+  async getAdminSubmissions({ sortField, sortOrder, skip, limit }) {
+    await connectDB();
+    const [submissions, total] = await Promise.all([
+      Submission.find()
+        .select('submissionId name email demographics.organization scores.huq scores.level isGuest version createdAt')
+        .sort({ [sortField]: sortOrder, _id: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Submission.countDocuments()
+    ]);
+    return { submissions, total };
+  },
+
   async getSubmissionsByUserId(userId) {
     await connectDB();
     return Submission.find({ userId }).sort({ createdAt: -1 });

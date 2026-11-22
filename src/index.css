@@ -449,6 +449,18 @@ svg.bloom .bsway{transform-origin:0 0;animation:bloom-sway 7s ease-in-out .5s in
 .admin-quotient-bar-item{background:var(--cream);padding:12px 16px;border-radius:12px;border:1px solid var(--sand)}
 .admin-search-form{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
 .admin-search-input{flex:1 1 280px;padding:12px 16px;border-radius:999px;border:1px solid var(--tan);background:var(--cream);font:500 1rem var(--sans)}
+.admin-search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px}
+.admin-search-grid label{display:grid;gap:6px;color:var(--maroon);font-size:.84rem;font-weight:600}
+.admin-search-grid input,.admin-search-grid select{box-sizing:border-box;width:100%;min-height:44px;padding:10px 13px;border:1px solid var(--tan);border-radius:12px;background:var(--cream);color:var(--text);font:500 .94rem var(--sans)}
+.admin-search-grid input:focus,.admin-search-grid select:focus{border-color:var(--bronze);outline:0;box-shadow:0 0 0 3px rgba(224,172,39,.2)}
+.admin-search-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.admin-submission-tabs{width:max-content;max-width:100%;margin-bottom:14px}
+.admin-submissions-table-wrap{max-width:100%;overflow-x:auto}
+.admin-sort-button{display:inline-flex;align-items:center;gap:4px;padding:4px 0;border:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;white-space:nowrap;cursor:pointer}
+.admin-sort-button:focus-visible{outline:2px solid var(--bronze);outline-offset:3px;border-radius:4px}
+.admin-submissions-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px}
+.admin-submissions-pagination>div{display:flex;align-items:center;gap:10px}
+.admin-submissions-pagination .btn{min-height:38px;padding:6px 12px}
 .admin-user-summary-card{background:rgba(224,172,39,.12);border:1px solid var(--gold);border-radius:16px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .admin-sub-item{background:#fff;border:1px solid var(--sand);border-radius:14px;padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
 .admin-sub-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
@@ -772,6 +784,15 @@ html.reveal-ready [data-reveal]:not(.is-visible){opacity:0;transform:translateY(
 }
 
 @media (max-width:639px){
+  .admin-submission-tabs{width:100%}
+  .admin-submission-tabs button{flex:1;justify-content:center}
+  .admin-submissions-pagination,.admin-submissions-pagination>div{justify-content:center}
+  .admin-submissions-table{display:table!important;width:max-content!important;min-width:760px}
+  .admin-submissions-table thead{position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip-path:none!important;white-space:normal!important}
+  .admin-submissions-table tbody{display:table-row-group!important}
+  .admin-submissions-table tr{display:table-row!important;padding:0!important;border:0!important}
+  .admin-submissions-table th,.admin-submissions-table td{display:table-cell!important;padding:8px 10px!important;border-bottom:1px solid var(--sand)!important;overflow-wrap:normal!important}
+  .admin-submissions-table td::before{content:none!important}
   .report-grid{grid-template-columns:minmax(0,1fr)}
   .sumtable{display:block}
   .sumtable thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
